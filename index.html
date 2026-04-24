@@ -23,29 +23,29 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       color-scheme: light;
-      --bg: #fff;
-      --text: #111;
-      --bar-bg: rgba(255, 255, 255, 0.94);
-      --bar-border: rgba(0, 0, 0, 0.08);
-      --btn-bg: #fff;
-      --btn-border: rgba(0, 0, 0, 0.15);
-      --btn-text: #333;
-      --btn-hover-border: rgba(0, 0, 0, 0.35);
-      --btn-active-bg: #111;
-      --btn-active-text: #fff;
-      --btn-active-border: #111;
-      --icon-btn-bg: #f6f6f6;
-      --icon-btn-color: #444;
-      --icon-btn-border: rgba(0, 0, 0, 0.18);
-      --icon-btn-hover-bg: #eee;
-      --icon-btn-hover-color: #111;
-      --icon-btn-hover-border: rgba(0, 0, 0, 0.28);
-      --gyro-text: #666;
-      --gyro-btn-border: #111;
-      --gyro-btn-bg: #111;
-      --gyro-btn-fg: #fff;
+      --bg: #e8dcc4;
+      --text: #2a2218;
+      --bar-bg: rgba(236, 226, 206, 0.96);
+      --bar-border: rgba(58, 44, 28, 0.12);
+      --btn-bg: #f0e6d2;
+      --btn-border: rgba(58, 44, 28, 0.18);
+      --btn-text: #3a3026;
+      --btn-hover-border: rgba(58, 44, 28, 0.34);
+      --btn-active-bg: #2a2218;
+      --btn-active-text: #f5ead8;
+      --btn-active-border: #2a2218;
+      --icon-btn-bg: #e0d2b8;
+      --icon-btn-color: #453a30;
+      --icon-btn-border: rgba(58, 44, 28, 0.2);
+      --icon-btn-hover-bg: #d4c4a8;
+      --icon-btn-hover-color: #2a2218;
+      --icon-btn-hover-border: rgba(58, 44, 28, 0.3);
+      --gyro-text: #564a3e;
+      --gyro-btn-border: #2a2218;
+      --gyro-btn-bg: #2a2218;
+      --gyro-btn-fg: #f5ead8;
       --err: #b00020;
-      --hint: #0a0a0a;
+      --hint: #1a1510;
     }
     html[data-theme='dark'] {
       color-scheme: dark;
@@ -112,6 +112,11 @@
       pointer-events: auto;
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
+      font-family: 'Averia Serif Libre', Georgia, 'Times New Roman', serif;
+    }
+    /* Buttons do not reliably inherit font-family from <nav> in UA styles. */
+    #mode-bar button {
+      font-family: 'Averia Serif Libre', Georgia, 'Times New Roman', serif;
     }
     .mode-bar__main {
       display: grid;
@@ -133,6 +138,42 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    .mode-bar__credit-group {
+      grid-column: 1;
+      justify-self: start;
+      align-self: center;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: nowrap;
+      padding-right: 10px;
+      min-width: 0;
+    }
+    .mode-bar__credit {
+      margin: 0;
+      font-family: 'Averia Serif Libre', Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      color: var(--gyro-text);
+      opacity: 0.88;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+    a.mode-bar__download {
+      font-family: 'Averia Serif Libre', Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      color: var(--gyro-text);
+      opacity: 0.88;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    a.mode-bar__download:hover {
+      opacity: 1;
     }
     #mode-bar button[data-mode] {
       font-size: 11px;
@@ -256,6 +297,10 @@
   </div>
   <nav id="mode-bar" aria-label="Display mode">
     <div class="mode-bar__main">
+      <div class="mode-bar__credit-group">
+        <p class="mode-bar__credit">© sam.brott 2026</p>
+        <a class="mode-bar__download" href="fruit-sheet.png" download="fruit-sheet.png">source image</a>
+      </div>
       <div class="mode-bar__modes">
         <button type="button" data-mode="default" class="is-active">Default</button>
         <button type="button" data-mode="physics">Physics</button>
@@ -1251,7 +1296,7 @@
       errEl.hidden = false;
       errEl.textContent =
         (e && e.message ? e.message : String(e)) +
-        ' — run a server in this folder: python3 -m http.server 8080';
+        ' — from the Fruit_World folder run: ./serve.sh   (or: python3 -m http.server 8080)';
     });
 })();
   </script>
