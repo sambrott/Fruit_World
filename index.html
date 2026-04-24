@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fruit stack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      try {
+        var k = 'fruit-stack-theme';
+        var t = localStorage.getItem(k);
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: light;
+      --bg: #fff;
+      --text: #111;
+      --bar-bg: rgba(255, 255, 255, 0.94);
+      --bar-border: rgba(0, 0, 0, 0.08);
+      --btn-bg: #fff;
+      --btn-border: rgba(0, 0, 0, 0.15);
+      --btn-text: #333;
+      --btn-hover-border: rgba(0, 0, 0, 0.35);
+      --btn-active-bg: #111;
+      --btn-active-text: #fff;
+      --btn-active-border: #111;
+      --icon-btn-bg: #f6f6f6;
+      --icon-btn-color: #444;
+      --icon-btn-border: rgba(0, 0, 0, 0.18);
+      --icon-btn-hover-bg: #eee;
+      --icon-btn-hover-color: #111;
+      --icon-btn-hover-border: rgba(0, 0, 0, 0.28);
+      --gyro-text: #666;
+      --gyro-btn-border: #111;
+      --gyro-btn-bg: #111;
+      --gyro-btn-fg: #fff;
+      --err: #b00020;
+      --hint: #0a0a0a;
+    }
+    html[data-theme='dark'] {
+      color-scheme: dark;
+      --bg: #0c0c0c;
+      --text: #f2f2f2;
+      --bar-bg: rgba(22, 22, 22, 0.94);
+      --bar-border: rgba(255, 255, 255, 0.08);
+      --btn-bg: #1e1e1e;
+      --btn-border: rgba(255, 255, 255, 0.14);
+      --btn-text: #e8e8e8;
+      --btn-hover-border: rgba(255, 255, 255, 0.32);
+      --btn-active-bg: #f0f0f0;
+      --btn-active-text: #111;
+      --btn-active-border: #f0f0f0;
+      --icon-btn-bg: #2a2a2a;
+      --icon-btn-color: #ddd;
+      --icon-btn-border: rgba(255, 255, 255, 0.14);
+      --icon-btn-hover-bg: #363636;
+      --icon-btn-hover-color: #fff;
+      --icon-btn-hover-border: rgba(255, 255, 255, 0.22);
+      --gyro-text: #aaa;
+      --gyro-btn-border: #e8e8e8;
+      --gyro-btn-bg: #e8e8e8;
+      --gyro-btn-fg: #111;
+      --err: #ff8a80;
+      --hint: #f0ece8;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      cursor: crosshair;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #stage {
+      position: fixed;
+      inset: 0;
+      touch-action: none;
+    }
+    .fruit {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      will-change: transform;
+    }
+    #mode-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+      background: var(--bar-bg);
+      border-top: 1px solid var(--bar-border);
+      pointer-events: auto;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    .mode-bar__main {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      column-gap: 20px;
+    }
+    .mode-bar__modes {
+      grid-column: 2;
+      justify-self: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+    .mode-bar__actions {
+      grid-column: 3;
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #mode-bar button[data-mode] {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border: 1px solid var(--btn-border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #mode-bar button[data-mode]:hover {
+      border-color: var(--btn-hover-border);
+    }
+    #mode-bar button[data-mode].is-active {
+      background: var(--btn-active-bg);
+      color: var(--btn-active-text);
+      border-color: var(--btn-active-border);
+    }
+    #theme-toggle,
+    #reset-fruits {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--icon-btn-color);
+      border: 1px solid var(--icon-btn-border);
+      background: var(--icon-btn-bg);
+      cursor: pointer;
+    }
+    #theme-toggle:hover,
+    #reset-fruits:hover {
+      background: var(--icon-btn-hover-bg);
+      color: var(--icon-btn-hover-color);
+      border-color: var(--icon-btn-hover-border);
+    }
+    #theme-toggle svg,
+    #reset-fruits svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+    #theme-toggle .theme-icon--sun {
+      display: none;
+    }
+    html[data-theme='dark'] #theme-toggle .theme-icon--moon {
+      display: none;
+    }
+    html[data-theme='dark'] #theme-toggle .theme-icon--sun {
+      display: block;
+    }
+    #gyro-prompt {
+      display: none;
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: var(--gyro-text);
+      padding: 4px 0 0;
+    }
+    #gyro-prompt.is-visible { display: block; }
+    #gyro-prompt button {
+      margin-left: 8px;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+      border: 1px solid var(--gyro-btn-border);
+      background: var(--gyro-btn-bg);
+      color: var(--gyro-btn-fg);
+      cursor: pointer;
+    }
+    #err {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--err);
+      font-size: 14px;
+      max-width: 320px;
+      text-align: center;
+      line-height: 1.5;
+      z-index: 300;
+    }
+    #starter-hint {
+      position: fixed;
+      z-index: 120;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, -100%);
+      max-width: min(calc(340px * 3), calc(100vw - 48px));
+      padding: 0 16px;
+      pointer-events: none;
+      text-align: center;
+      font-family: 'Averia Serif Libre', Georgia, 'Times New Roman', serif;
+      font-size: 3.15rem;
+      line-height: 1.45;
+      color: var(--hint);
+    }
+    #starter-hint[hidden] {
+      display: none !important;
+    }
+    #starter-hint .starter-hint__lead {
+      font-size: 3.36rem;
+      font-weight: 700;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage" aria-label="Fruit canvas"></div>
+  <div id="starter-hint" hidden role="status">
+    <p class="starter-hint__lead">Click to add more fruit</p>
+  </div>
+  <nav id="mode-bar" aria-label="Display mode">
+    <div class="mode-bar__main">
+      <div class="mode-bar__modes">
+        <button type="button" data-mode="default" class="is-active">Default</button>
+        <button type="button" data-mode="physics">Physics</button>
+        <button type="button" data-mode="snake">Snake</button>
+        <button type="button" data-mode="orbit">Orbit</button>
+        <button type="button" data-mode="rain">Rain</button>
+        <button type="button" data-mode="vortex">Vortex</button>
+      </div>
+      <div class="mode-bar__actions">
+        <button type="button" id="reset-fruits" aria-label="Reset to one fruit in the center" title="Reset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </button>
+        <button type="button" id="theme-toggle" aria-label="Switch to dark mode" title="Theme">
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="gyro-prompt">Tilt to steer in Physics mode <button type="button" id="gyro-enable">Enable motion</button></div>
+  </nav>
+  <p id="err" hidden></p>
+
+  <script>
+(function () {
+  var stage = document.getElementById('stage');
+  var errEl = document.getElementById('err');
+  var starterHint = document.getElementById('starter-hint');
+  var modeBar = document.getElementById('mode-bar');
+  var gyroPrompt = document.getElementById('gyro-prompt');
+  var gyroBtn = document.getElementById('gyro-enable');
+  var resetBtn = document.getElementById('reset-fruits');
+  var themeToggle = document.getElementById('theme-toggle');
+  var THEME_STORAGE_KEY = 'fruit-stack-theme';
+
+  function getTheme() {
+    var t = document.documentElement.getAttribute('data-theme');
+    return t === 'dark' ? 'dark' : 'light';
+  }
+
+  function applyTheme(next) {
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch (e) {}
+    if (themeToggle) {
+      themeToggle.setAttribute(
+        'aria-label',
+        next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+      );
+      themeToggle.title = next === 'dark' ? 'Light mode' : 'Dark mode';
+    }
+  }
+
+  if (themeToggle) {
+    applyTheme(getTheme());
+    themeToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  var MODE = {
+    DEFAULT: 'default',
+    PHYSICS: 'physics',
+    SNAKE: 'snake',
+    ORBIT: 'orbit',
+    RAIN: 'rain',
+    VORTEX: 'vortex'
+  };
+
+  var urls = [];
+  var items = [];
+  var z = 1;
+  var mode = MODE.DEFAULT;
+  var cursorX = window.innerWidth / 2;
+  var cursorY = window.innerHeight / 2;
+  var lastPx = cursorX;
+  var lastPy = cursorY;
+  var t0 = performance.now();
+  var lastFrame = t0;
+  var SPAWN_INTERVAL_MS = 95;
+  var holdTimer = null;
+
+  var R = 60;
+  /** Max fruit center Y so the 120px sprite sits on the mode bar top (viewport coords). */
+  function fruitFloorMaxPy() {
+    if (!modeBar) return window.innerHeight - R;
+    return modeBar.getBoundingClientRect().top - R;
+  }
+  var grav = { x: 0, y: 0.95 };
+  var gyroHandlerAttached = false;
+  var physicsGrab = null;
+  var physPrevGrabX = 0;
+  var physPrevGrabY = 0;
+  var physThrowVx = 0;
+  var physThrowVy = 0;
+  var PHYS_PICK_R = 64;
+  var PHYS_THROW_MUL = 1.28;
+  var PHYS_FRUIT_RESTITUTION = 0.58;
+  var PHYS_COLL_ITERS = 4;
+  var PHYS_MAX_FRUIT = 300;
+
+  var snakePoints = [];
+  var snakeSmoothX = cursorX;
+  var snakeSmoothY = cursorY;
+  var SNAKE_SPACING = 52;
+  var rainSpawnSeq = 0;
+  var RAIN_PHI = 0.618033988749895;
+  var DEFAULT_FF_RADIUS = 215;
+  var DEFAULT_FF_STRENGTH = 2100;
+  var DEFAULT_IN_ZONE_HOME_MUL = 0.18;
+  var DEFAULT_OUTSIDE_HOME_BOOST = 1.95;
+  var DEFAULT_OUTSIDE_EXTRA_DAMP = 0.904;
+  var DEFAULT_HOME_SPRING = 1.12;
+  var DEFAULT_HOME_DEAD = 20;
+  var DEFAULT_SEP_RADIUS = 62;
+  var DEFAULT_SEP_STRENGTH = 410;
+  var DEFAULT_CURSOR_MOVE_THRESH = 0.5;
+  var DEFAULT_SCATTER_MIN_CELL = 84;
+  var DEFAULT_SCATTER_ASPECT_MUL = 2.12;
+  var MODE_BLEND_MS = 480;
+  var modeBlendT0 = 0;
+  var loopPrevCx = cursorX;
+  var loopPrevCy = cursorY;
+
+  function pickUrl() {
+    return urls[(Math.random() * urls.length) | 0];
+  }
+
+  function pickTopPhysicsFruit(cx, cy) {
+    var best = null;
+    var bestZ = -1;
+    for (var qi = 0; qi < items.length; qi++) {
+      var qit = items[qi];
+      var d = Math.hypot(qit.px - cx, qit.py - cy);
+      if (d < PHYS_PICK_R && qit.z > bestZ) {
+        bestZ = qit.z;
+        best = qit;
+      }
+    }
+    return best;
+  }
+
+  function releasePhysicsGrab() {
+    if (physicsGrab) {
+      physicsGrab.vx = physThrowVx * PHYS_THROW_MUL;
+      physicsGrab.vy = physThrowVy * PHYS_THROW_MUL;
+      physicsGrab = null;
+    }
+    physThrowVx = 0;
+    physThrowVy = 0;
+  }
+
+  function resolvePhysicsFruitCollisions(W, floorMaxPy, grabVx, grabVy) {
+    var minD = 2 * R - 0.5;
+    var e = PHYS_FRUIT_RESTITUTION;
+    var wallB = 0.48;
+    for (var iter = 0; iter < PHYS_COLL_ITERS; iter++) {
+      for (var ci = 0; ci < items.length; ci++) {
+        for (var cj = ci + 1; cj < items.length; cj++) {
+          var a = items[ci];
+          var b = items[cj];
+          var ag = physicsGrab === a;
+          var bg = physicsGrab === b;
+          if (ag && bg) continue;
+          var dx = b.px - a.px;
+          var dy = b.py - a.py;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 1e-4) {
+            dist = 1e-4;
+            dx = 1;
+            dy = 0;
+          }
+          if (dist >= minD) continue;
+          var nx = dx / dist;
+          var ny = dy / dist;
+          var overlap = minD - dist;
+          if (ag && !bg) {
+            b.px += nx * overlap;
+            b.py += ny * overlap;
+            var rvx = b.vx - grabVx;
+            var rvy = b.vy - grabVy;
+            var vn = rvx * nx + rvy * ny;
+            if (vn < 0) {
+              var imp = -(1 + e) * vn;
+              b.vx += imp * nx;
+              b.vy += imp * ny;
+            }
+          } else if (bg && !ag) {
+            a.px -= nx * overlap;
+            a.py -= ny * overlap;
+            rvx = a.vx - grabVx;
+            rvy = a.vy - grabVy;
+            vn = rvx * nx + rvy * ny;
+            if (vn > 0) {
+              var impA = (1 + e) * vn;
+              a.vx -= impA * nx;
+              a.vy -= impA * ny;
+            }
+          } else {
+            var corr = overlap * 0.5;
+            a.px -= nx * corr;
+            a.py -= ny * corr;
+            b.px += nx * corr;
+            b.py += ny * corr;
+            vn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+            if (vn > 0) {
+              var imp2 = ((1 + e) * vn) / 2;
+              a.vx -= imp2 * nx;
+              a.vy -= imp2 * ny;
+              b.vx += imp2 * nx;
+              b.vy += imp2 * ny;
+            }
+          }
+        }
+      }
+    }
+    for (var ck = 0; ck < items.length; ck++) {
+      var cit = items[ck];
+      if (physicsGrab === cit) {
+        cit.px = Math.max(R, Math.min(W - R, cursorX));
+        cit.py = Math.max(R, Math.min(floorMaxPy, cursorY));
+        continue;
+      }
+      if (cit.px < R) {
+        cit.px = R;
+        cit.vx *= -wallB;
+      }
+      if (cit.px > W - R) {
+        cit.px = W - R;
+        cit.vx *= -wallB;
+      }
+      if (cit.py < R) {
+        cit.py = R;
+        cit.vy *= -wallB;
+      }
+      if (cit.py > floorMaxPy) {
+        cit.py = floorMaxPy;
+        cit.vy *= -wallB;
+      }
+    }
+  }
+
+  /** Screen position where the lone fruit was spawned; hint stays fixed here (does not follow motion). */
+  var starterHintAnchorX = null;
+  var starterHintAnchorY = null;
+  var STARTER_HINT_ABOVE_FRUIT = 88;
+
+  function updateStarterHint() {
+    if (!starterHint) return;
+    if (items.length !== 1) {
+      starterHint.hidden = true;
+      starterHintAnchorX = null;
+      starterHintAnchorY = null;
+      return;
+    }
+    if (starterHintAnchorX == null || starterHintAnchorY == null) {
+      var it0 = items[0];
+      starterHintAnchorX = it0.px != null ? it0.px : it0.bx;
+      starterHintAnchorY = it0.py != null ? it0.py : it0.by;
+    }
+    starterHint.hidden = false;
+    starterHint.style.left = starterHintAnchorX + 'px';
+    starterHint.style.top = starterHintAnchorY - STARTER_HINT_ABOVE_FRUIT + 'px';
+    starterHint.style.transform = 'translate(-50%, -100%)';
+  }
+
+  function ensureSim(it, x, y) {
+    if (it.px == null) it.px = x;
+    if (it.py == null) it.py = y;
+    if (it.vx == null) it.vx = (Math.random() - 0.5) * 160;
+    if (it.vy == null) it.vy = (Math.random() - 0.5) * 160;
+  }
+
+  /** Spawn above the viewport with downward velocity; low-discrepancy X so drops aren't clumped. */
+  function rainSpawnFromAbove(it, W, H, extraHigh) {
+    var spread = extraHigh == null ? 0 : extraHigh;
+    rainSpawnSeq++;
+    var u = (rainSpawnSeq * RAIN_PHI) % 1;
+    var v = (rainSpawnSeq * 0.4142135623730951) % 1;
+    var w = (rainSpawnSeq * 0.7548776662466927) % 1;
+    if (u < 0) u += 1;
+    if (v < 0) v += 1;
+    if (w < 0) w += 1;
+    var jitterX = (Math.random() - 0.5) * Math.min(64, W * 0.065);
+    it.px = Math.max(R, Math.min(W - R, u * W + jitterX));
+    it.py = -R - 32 - v * 130 - w * 85 - spread;
+    it.vy = 300 + w * 440 + (Math.random() - 0.5) * 70;
+    it.vx = (Math.random() - 0.5) * 48 + (u - 0.5) * 22;
+  }
+
+  function addFruit(clientX, clientY) {
+    var x = clientX;
+    var y = clientY;
+    var H0 = window.innerHeight;
+    var W0 = window.innerWidth;
+    if (mode === MODE.RAIN) {
+      x = Math.random() * W0;
+      y = -50 - Math.random() * 80;
+    }
+
+    var img = document.createElement('img');
+    img.className = 'fruit';
+    img.src = pickUrl();
+    img.alt = '';
+    img.draggable = false;
+    stage.appendChild(img);
+
+    var depth = 0.35 + Math.random() * 0.65;
+    var phase = Math.random() * Math.PI * 2;
+    var spin = (Math.random() - 0.5) * 0.04;
+
+    var it = {
+      el: img,
+      bx: x,
+      by: y,
+      depth: depth,
+      phase: phase,
+      spin: spin,
+      z: z++
+    };
+    ensureSim(it, x, y);
+    if (mode === MODE.RAIN) {
+      rainSpawnFromAbove(it, W0, H0, 0);
+      it.rainExitPhase = false;
+    } else if (mode === MODE.DEFAULT) {
+      var floor0 = fruitFloorMaxPy();
+      var tAng = Math.random() * Math.PI * 2;
+      var tRad = 38 + Math.random() * 78;
+      it.bx = Math.max(R, Math.min(W0 - R, clientX + Math.cos(tAng) * tRad));
+      it.by = Math.max(R, Math.min(floor0, clientY + Math.sin(tAng) * tRad));
+      it.px = Math.max(R, Math.min(W0 - R, clientX + (Math.random() - 0.5) * 32));
+      it.py = Math.max(R, Math.min(floor0, clientY + (Math.random() - 0.5) * 32));
+      it.vx = (Math.random() - 0.5) * 110;
+      it.vy = (Math.random() - 0.5) * 110;
+    }
+
+    items.push(it);
+    img.style.zIndex = String(it.z);
+    if (items.length === 1) {
+      starterHintAnchorX = it.px != null ? it.px : it.bx;
+      starterHintAnchorY = it.py != null ? it.py : it.by;
+    }
+    trimPhysicsFruitCount();
+  }
+
+  function pathLengthFromHead(pts) {
+    var L = 0;
+    for (var i = 0; i < pts.length - 1; i++) {
+      var dx = pts[i].x - pts[i + 1].x;
+      var dy = pts[i].y - pts[i + 1].y;
+      L += Math.sqrt(dx * dx + dy * dy);
+    }
+    return L;
+  }
+
+  function pointOnSnake(distFromHead) {
+    var pts = snakePoints;
+    if (!pts.length) return { x: snakeSmoothX, y: snakeSmoothY };
+    if (pts.length === 1) return { x: pts[0].x, y: pts[0].y };
+    var acc = 0;
+    for (var i = 0; i < pts.length - 1; i++) {
+      var a = pts[i];
+      var b = pts[i + 1];
+      var dx = b.x - a.x;
+      var dy = b.y - a.y;
+      var seg = Math.sqrt(dx * dx + dy * dy) || 0.001;
+      if (acc + seg >= distFromHead) {
+        var t = (distFromHead - acc) / seg;
+        return { x: a.x + dx * t, y: a.y + dy * t };
+      }
+      acc += seg;
+    }
+    return { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y };
+  }
+
+  function resetFruitsToOne() {
+    stopHoldSpawn();
+    if (physicsGrab) {
+      physicsGrab = null;
+      physThrowVx = 0;
+      physThrowVy = 0;
+    }
+    items.forEach(function (it) {
+      if (it.el && it.el.parentNode) it.el.remove();
+    });
+    items.length = 0;
+    modeBlendT0 = 0;
+    var W0 = window.innerWidth;
+    var H0 = window.innerHeight;
+    var cx = W0 / 2;
+    var cy = Math.min(H0 / 2, fruitFloorMaxPy());
+    lastPx = cx;
+    lastPy = cy;
+    cursorX = cx;
+    cursorY = cy;
+    addFruit(cx, cy);
+    var lone = items[0];
+    if (lone) {
+      lone.bx = cx;
+      lone.by = cy;
+      lone.px = cx;
+      lone.py = cy;
+      lone.vx = 0;
+      lone.vy = 0;
+      lone.rainExitPhase = false;
+    }
+    starterHintAnchorX = cx;
+    starterHintAnchorY = cy;
+    if (mode === MODE.SNAKE) {
+      snakePoints = [{ x: cursorX, y: cursorY }];
+      snakeSmoothX = cursorX;
+      snakeSmoothY = cursorY;
+    }
+  }
+
+  function trimPhysicsFruitCount() {
+    if (mode !== MODE.PHYSICS) return;
+    while (items.length > PHYS_MAX_FRUIT) {
+      var victim = items.shift();
+      if (physicsGrab === victim) {
+        physicsGrab = null;
+        physThrowVx = 0;
+        physThrowVy = 0;
+      }
+      if (victim && victim.el && victim.el.parentNode) victim.el.remove();
+    }
+  }
+
+  function updateSnakePath() {
+    snakeSmoothX += (cursorX - snakeSmoothX) * 0.22;
+    snakeSmoothY += (cursorY - snakeSmoothY) * 0.22;
+    var head = snakePoints[0];
+    if (!head || Math.hypot(head.x - snakeSmoothX, head.y - snakeSmoothY) > 3) {
+      snakePoints.unshift({ x: snakeSmoothX, y: snakeSmoothY });
+    } else {
+      snakePoints[0] = { x: snakeSmoothX, y: snakeSmoothY };
+    }
+    var need = items.length * SNAKE_SPACING + 400;
+    while (pathLengthFromHead(snakePoints) > need && snakePoints.length > 3) {
+      snakePoints.pop();
+    }
+  }
+
+  function setMode(next) {
+    var prev = mode;
+    if (prev === MODE.PHYSICS && physicsGrab) releasePhysicsGrab();
+    if (next !== prev && items.length > 0 && next !== MODE.RAIN) {
+      modeBlendT0 = performance.now();
+      items.forEach(function (it) {
+        var ox =
+          it._drawX != null && it._drawX === it._drawX ? it._drawX : it.px != null ? it.px : it.bx;
+        var oy =
+          it._drawY != null && it._drawY === it._drawY ? it._drawY : it.py != null ? it.py : it.by;
+        it._blendX0 = ox;
+        it._blendY0 = oy;
+      });
+    }
+    mode = next;
+    modeBar.querySelectorAll('button[data-mode]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-mode') === mode);
+    });
+    gyroPrompt.classList.toggle(
+      'is-visible',
+      mode === MODE.PHYSICS &&
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function' &&
+        !gyroHandlerAttached
+    );
+
+    if (mode === MODE.SNAKE) {
+      snakePoints = [{ x: cursorX, y: cursorY }];
+      snakeSmoothX = cursorX;
+      snakeSmoothY = cursorY;
+    }
+    if (mode === MODE.PHYSICS) {
+      trimPhysicsFruitCount();
+    }
+    if (mode === MODE.RAIN) {
+      var Rw = window.innerWidth;
+      var Rh = window.innerHeight;
+      var nRain = items.length;
+      rainSpawnSeq = nRain + 64;
+      items.forEach(function (it) {
+        var sx =
+          it._drawX != null && it._drawX === it._drawX ? it._drawX : it.px != null ? it.px : it.bx;
+        var sy =
+          it._drawY != null && it._drawY === it._drawY ? it._drawY : it.py != null ? it.py : it.by;
+        it.px = Math.max(R, Math.min(Rw - R, sx));
+        it.py = sy;
+        it.vx = (Math.random() - 0.5) * 115;
+        it.vy = 300 + Math.random() * 360;
+        it.rainExitPhase = true;
+        it.bx = it.px;
+        it.by = Math.max(-600, Math.min(Rh + 120, it.py));
+      });
+    }
+    if (mode === MODE.DEFAULT && prev !== MODE.DEFAULT) {
+      var Wd = window.innerWidth;
+      var floorDef = fruitFloorMaxPy();
+      var nDef = items.length;
+      var spanX = Math.max(80, Wd - 2 * R);
+      var spanY = Math.max(80, floorDef - R);
+      var aspect = spanX / Math.max(1, spanY);
+      var colsW = Math.max(1, Math.floor(spanX / DEFAULT_SCATTER_MIN_CELL));
+      var colsA = Math.round(Math.sqrt(nDef * Math.max(0.82, aspect) * DEFAULT_SCATTER_ASPECT_MUL));
+      var cols = Math.min(nDef, Math.max(nDef <= 3 ? 1 : 4, colsW, colsA));
+      if (nDef <= 1) cols = 1;
+      var rows = Math.ceil(nDef / cols) || 1;
+      var slots = new Array(nDef);
+      for (var si = 0; si < nDef; si++) slots[si] = si;
+      for (var sj = nDef - 1; sj > 0; sj--) {
+        var sk = (Math.random() * (sj + 1)) | 0;
+        var tmp = slots[sj];
+        slots[sj] = slots[sk];
+        slots[sk] = tmp;
+      }
+      items.forEach(function (it, idx) {
+        var slot = slots[idx];
+        var col = slot % cols;
+        var row = (slot / cols) | 0;
+        col = (col + row * 2) % cols;
+        var xCell = (col + 0.14 + Math.random() * 0.72) / cols;
+        var yCell = (row + 0.14 + Math.random() * 0.72) / rows;
+        it.bx = R + xCell * spanX;
+        it.by = R + yCell * spanY;
+        it.px = Math.max(R, Math.min(Wd - R, it.bx + (Math.random() - 0.5) * 36));
+        it.py = Math.max(R, Math.min(floorDef, it.by + (Math.random() - 0.5) * 36));
+        it.vx = (Math.random() - 0.5) * 125;
+        it.vy = (Math.random() - 0.5) * 125;
+      });
+    }
+    items.forEach(function (it) {
+      ensureSim(it, it.bx, it.by);
+    });
+  }
+
+  function attachGyro() {
+    if (gyroHandlerAttached) return;
+    window.addEventListener(
+      'deviceorientation',
+      function (e) {
+        if (mode !== MODE.PHYSICS) return;
+        var g = e.gamma;
+        var b = e.beta;
+        if (g == null || b == null) return;
+        grav.x = Math.max(-1.2, Math.min(1.2, g / 25));
+        grav.y = Math.max(-1.2, Math.min(1.2, (b - 50) / 25));
+      },
+      true
+    );
+    gyroHandlerAttached = true;
+    gyroPrompt.classList.remove('is-visible');
+  }
+
+  if (gyroBtn) {
+    gyroBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        DeviceOrientationEvent.requestPermission()
+          .then(function (s) {
+            if (s === 'granted') attachGyro();
+          })
+          .catch(function () {});
+      } else {
+        attachGyro();
+      }
+    });
+  }
+
+  modeBar.querySelectorAll('button[data-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var m = btn.getAttribute('data-mode');
+      if (m) setMode(m);
+    });
+  });
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      resetFruitsToOne();
+    });
+  }
+
+  function loop(now) {
+    var dt = Math.min(0.055, (now - lastFrame) / 1000);
+    lastFrame = now;
+    var t = (now - t0) * 0.001;
+    var W = window.innerWidth;
+    var H = window.innerHeight;
+    var floorY = fruitFloorMaxPy();
+
+    var cursorMove = Math.hypot(cursorX - loopPrevCx, cursorY - loopPrevCy);
+
+    var physCollGrabSnapX = physPrevGrabX;
+    var physCollGrabSnapY = physPrevGrabY;
+
+    var blendW = 1;
+    if (modeBlendT0 > 0) {
+      var blendElapsed = now - modeBlendT0;
+      blendW = Math.min(1, blendElapsed / MODE_BLEND_MS);
+      blendW = blendW * blendW * (3 - 2 * blendW);
+      if (blendElapsed >= MODE_BLEND_MS) modeBlendT0 = 0;
+    }
+
+    if (mode === MODE.SNAKE) updateSnakePath();
+
+    var RAIN_GRAVITY = 2200;
+
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var d = it.depth;
+      var x, y, rot;
+
+      if (mode === MODE.DEFAULT) {
+        ensureSim(it, it.bx, it.by);
+        var fdx = it.px - cursorX;
+        var fdy = it.py - cursorY;
+        var fdist = Math.sqrt(fdx * fdx + fdy * fdy) + 0.001;
+        var inPushZone =
+          cursorMove > DEFAULT_CURSOR_MOVE_THRESH && fdist < DEFAULT_FF_RADIUS;
+        if (inPushZone) {
+          var ff = Math.max(0, 1 - fdist / DEFAULT_FF_RADIUS);
+          ff = Math.pow(ff, 2.25);
+          var push = DEFAULT_FF_STRENGTH * ff;
+          var mv = cursorMove + 0.001;
+          var mx = (cursorX - loopPrevCx) / mv;
+          var my = (cursorY - loopPrevCy) / mv;
+          var rdx = fdx / fdist;
+          var rdy = fdy / fdist;
+          var inline = Math.abs(mx * rdx + my * rdy);
+          var pathway = 0.52 + 0.48 * inline * inline;
+          push *= pathway;
+          it.vx += rdx * push * dt;
+          it.vy += rdy * push * dt;
+        }
+        var sepX = 0;
+        var sepY = 0;
+        var sepR = DEFAULT_SEP_RADIUS;
+        for (var sj = 0; sj < items.length; sj++) {
+          if (sj === i) continue;
+          var so = items[sj];
+          var sdx = it.px - so.px;
+          var sdy = it.py - so.py;
+          var sd = Math.sqrt(sdx * sdx + sdy * sdy) + 0.001;
+          if (sd < sepR) {
+            var sq = Math.pow(1 - sd / sepR, 1.55);
+            var sf = sq * DEFAULT_SEP_STRENGTH;
+            sepX += (sdx / sd) * sf;
+            sepY += (sdy / sd) * sf;
+          }
+        }
+        it.vx += sepX * dt;
+        it.vy += sepY * dt;
+        var hx = it.bx - it.px;
+        var hy = it.by - it.py;
+        var hdist = Math.sqrt(hx * hx + hy * hy);
+        var localHomeMul = inPushZone ? DEFAULT_IN_ZONE_HOME_MUL : 1;
+        var homeK = DEFAULT_HOME_SPRING * localHomeMul;
+        if (!inPushZone) homeK *= DEFAULT_OUTSIDE_HOME_BOOST;
+        if (hdist < DEFAULT_HOME_DEAD) homeK *= hdist / DEFAULT_HOME_DEAD;
+        if (hdist > 0.02) {
+          var cap = Math.min(hdist, inPushZone ? 88 : 118);
+          it.vx += (hx / hdist) * cap * homeK * dt;
+          it.vy += (hy / hdist) * cap * homeK * dt;
+        }
+        var baseDamp = 0.935;
+        if (!inPushZone) baseDamp *= DEFAULT_OUTSIDE_EXTRA_DAMP;
+        it.vx *= Math.pow(baseDamp, dt * 60);
+        it.vy *= Math.pow(baseDamp, dt * 60);
+        it.px += it.vx * dt;
+        it.py += it.vy * dt;
+        var defBounce = 0.42;
+        if (it.px < R) {
+          it.px = R;
+          it.vx *= -defBounce;
+        }
+        if (it.px > W - R) {
+          it.px = W - R;
+          it.vx *= -defBounce;
+        }
+        if (it.py < R) {
+          it.py = R;
+          it.vy *= -defBounce;
+        }
+        if (it.py > floorY) {
+          it.py = floorY;
+          it.vy *= -defBounce;
+        }
+        var bobX = Math.sin(t * 0.9 + it.phase) * (5 + 4 * d);
+        var bobY = Math.cos(t * 0.75 + it.phase * 1.3) * (4 + 3 * d);
+        x = it.px + bobX;
+        y = Math.min(it.py + bobY, floorY);
+        rot = it.spin * t * 57.3;
+      } else if (mode === MODE.PHYSICS) {
+        if (physicsGrab === it) {
+          var dgx = cursorX - physPrevGrabX;
+          var dgy = cursorY - physPrevGrabY;
+          var instVx = dgx / Math.max(1e-4, dt);
+          var instVy = dgy / Math.max(1e-4, dt);
+          physThrowVx = physThrowVx * 0.78 + instVx * 0.22;
+          physThrowVy = physThrowVy * 0.78 + instVy * 0.22;
+          physPrevGrabX = cursorX;
+          physPrevGrabY = cursorY;
+          it.px = Math.max(R, Math.min(W - R, cursorX));
+          it.py = Math.max(R, Math.min(floorY, cursorY));
+          it.vx = 0;
+          it.vy = 0;
+        } else {
+          if (!gyroHandlerAttached) {
+            grav.x *= 0.96;
+            grav.y = grav.y * 0.96 + 0.95 * 0.06;
+          }
+          var gx = grav.x * 1180;
+          var gy = grav.y * 1180;
+          it.vx += gx * dt;
+          it.vy += gy * dt;
+          it.vx *= Math.pow(0.994, dt * 60);
+          it.vy *= Math.pow(0.994, dt * 60);
+          it.px += it.vx * dt;
+          it.py += it.vy * dt;
+          var physBounce = 0.48;
+          if (it.px < R) {
+            it.px = R;
+            it.vx *= -physBounce;
+          }
+          if (it.px > W - R) {
+            it.px = W - R;
+            it.vx *= -physBounce;
+          }
+          if (it.py < R) {
+            it.py = R;
+            it.vy *= -physBounce;
+          }
+          if (it.py > floorY) {
+            it.py = floorY;
+            it.vy *= -physBounce;
+          }
+        }
+        x = it.px;
+        y = it.py;
+        rot = it.spin * t * 57.3 + Math.atan2(it.vy, it.vx + 0.001) * (180 / Math.PI) * 0.25;
+      } else if (mode === MODE.SNAKE) {
+        var dist = (items.length - 1 - i) * SNAKE_SPACING;
+        var p = pointOnSnake(dist);
+        x = p.x + Math.sin(t * 1.2 + it.phase) * 2;
+        y = Math.min(p.y + Math.cos(t * 1.1 + it.phase) * 2, floorY);
+        rot = it.spin * t * 57.3;
+        var p2 = pointOnSnake(dist + 8);
+        rot += Math.atan2(p2.y - p.y, p2.x - p.x + 0.001) * (180 / Math.PI);
+      } else if (mode === MODE.ORBIT) {
+        var n = items.length;
+        // Same outer envelope as before, but radii fill from center so there is no hollow core.
+        var ringGrow = 20 + Math.sqrt(Math.max(1, n)) * 4.5 + Math.min(72, n * 0.42);
+        var maxLayers = n > 0 ? ((n - 1) / 12) | 0 : 0;
+        var rMax = ringGrow + 11 * 6.5 + maxLayers * 4.5;
+        var rMin = 3;
+        var ang = t * 1.1 + i * 0.62;
+        var rad =
+          n <= 1 ? rMin : rMin + (rMax - rMin) * Math.sqrt(i / (n - 1));
+        x = cursorX + Math.cos(ang) * rad;
+        y = Math.min(cursorY + Math.sin(ang) * rad, floorY);
+        rot = ang * (180 / Math.PI) + 90;
+      } else if (mode === MODE.RAIN) {
+        it.vy += RAIN_GRAVITY * dt;
+        it.px += it.vx * dt + Math.sin(t * 1.85 + it.phase) * 0.22;
+        it.py += it.vy * dt;
+        /* No mode-bar floor in rain: drops pass through the nav and respawn from above. */
+        if (it.py > H + R + 60) {
+          rainSpawnFromAbove(it, W, H, 0);
+          it.rainExitPhase = false;
+        }
+        x = it.px;
+        y = it.py;
+        rot = it.spin * t * 57.3;
+      } else if (mode === MODE.VORTEX) {
+        var sepX = 0;
+        var sepY = 0;
+        var sepR = 78;
+        for (var j = 0; j < items.length; j++) {
+          if (j === i) continue;
+          var o = items[j];
+          var sdx = it.px - o.px;
+          var sdy = it.py - o.py;
+          var sd = Math.sqrt(sdx * sdx + sdy * sdy) + 0.001;
+          if (sd < sepR) {
+            var push = Math.pow(1 - sd / sepR, 2) * 130;
+            sepX += (sdx / sd) * push;
+            sepY += (sdy / sd) * push;
+          }
+        }
+        var dx = cursorX - it.px;
+        var dy = cursorY - it.py;
+        var dist = Math.sqrt(dx * dx + dy * dy) + 0.001;
+        // Stronger pull + swirl keeps motion in a tight spiral so the vortex reads clearly.
+        var pull = 207.5 * dt;
+        var swirl = 167.5 * dt;
+        it.vx += sepX * dt;
+        it.vy += sepY * dt;
+        it.vx += (dx / dist) * pull + (-dy / dist) * swirl;
+        it.vy += (dy / dist) * pull + (dx / dist) * swirl;
+        it.vx += (Math.sin(t * 1.7 + i) * 14 + Math.cos(t * 1.1 + it.phase) * 9) * dt;
+        it.vy += (Math.cos(t * 1.5 + i) * 14 + Math.sin(t * 0.9 + it.phase) * 9) * dt;
+        it.vx *= 0.982;
+        it.vy *= 0.982;
+        it.px += it.vx * dt * 22.5;
+        it.py += it.vy * dt * 22.5;
+        if (it.px < R) {
+          it.px = R;
+          it.vx *= -0.45;
+        }
+        if (it.px > W - R) {
+          it.px = W - R;
+          it.vx *= -0.45;
+        }
+        if (it.py < R) {
+          it.py = R;
+          it.vy *= -0.45;
+        }
+        if (it.py > floorY) {
+          it.py = floorY;
+          it.vy *= -0.45;
+        }
+        x = it.px;
+        y = it.py;
+        rot = Math.atan2(it.vy, it.vx) * (180 / Math.PI);
+      } else {
+        x = it.bx;
+        y = it.by;
+        rot = 0;
+      }
+
+      if (blendW < 1) {
+        var tx = x;
+        var ty = y;
+        x = it._blendX0 + (tx - it._blendX0) * blendW;
+        y = it._blendY0 + (ty - it._blendY0) * blendW;
+        if (mode === MODE.DEFAULT) {
+          var syncBobX = Math.sin(t * 0.9 + it.phase) * (5 + 4 * d);
+          var syncBobY = Math.cos(t * 0.75 + it.phase * 1.3) * (4 + 3 * d);
+          y = Math.min(y, floorY);
+          it.px = x - syncBobX;
+          it.py = y - syncBobY;
+        } else if (mode === MODE.PHYSICS || mode === MODE.RAIN || mode === MODE.VORTEX) {
+          it.px = x;
+          it.py = y;
+        }
+      }
+
+      it.el.style.transform =
+        'translate(-50%, -50%) translate(' + x + 'px,' + y + 'px) rotate(' + rot + 'deg)';
+      it._drawX = x;
+      it._drawY = y;
+    }
+
+    if (mode === MODE.PHYSICS) {
+      var collGvx = physicsGrab
+        ? (cursorX - physCollGrabSnapX) / Math.max(1e-4, dt)
+        : 0;
+      var collGvy = physicsGrab
+        ? (cursorY - physCollGrabSnapY) / Math.max(1e-4, dt)
+        : 0;
+      resolvePhysicsFruitCollisions(W, floorY, collGvx, collGvy);
+    }
+
+    updateStarterHint();
+
+    loopPrevCx = cursorX;
+    loopPrevCy = cursorY;
+
+    requestAnimationFrame(loop);
+  }
+
+  function onMove(e) {
+    var px = e.clientX;
+    var py = e.clientY;
+    if (e.touches && e.touches[0]) {
+      px = e.touches[0].clientX;
+      py = e.touches[0].clientY;
+    }
+    cursorX = px;
+    cursorY = py;
+    if (e.buttons & 1) {
+      lastPx = px;
+      lastPy = py;
+    }
+  }
+
+  function stopHoldSpawn() {
+    if (holdTimer !== null) {
+      clearInterval(holdTimer);
+      holdTimer = null;
+    }
+  }
+
+  function startHoldSpawn() {
+    stopHoldSpawn();
+    addFruit(lastPx, lastPy);
+    holdTimer = window.setInterval(function () {
+      addFruit(lastPx, lastPy);
+    }, SPAWN_INTERVAL_MS);
+  }
+
+  window.addEventListener('pointermove', onMove, { passive: true });
+
+  document.addEventListener(
+    'pointerdown',
+    function (e) {
+      if (e.button !== 0) return;
+      if (e.target.closest('#mode-bar')) return;
+      lastPx = e.clientX;
+      lastPy = e.clientY;
+      if (mode === MODE.PHYSICS) {
+        var hit = pickTopPhysicsFruit(lastPx, lastPy);
+        if (hit) {
+          stopHoldSpawn();
+          if (physicsGrab && physicsGrab !== hit) {
+            physicsGrab.vx = physThrowVx * PHYS_THROW_MUL;
+            physicsGrab.vy = physThrowVy * PHYS_THROW_MUL;
+          }
+          physicsGrab = hit;
+          physPrevGrabX = lastPx;
+          physPrevGrabY = lastPy;
+          physThrowVx = 0;
+          physThrowVy = 0;
+          cursorX = lastPx;
+          cursorY = lastPy;
+          hit.px = Math.max(R, Math.min(window.innerWidth - R, lastPx));
+          hit.py = Math.max(R, Math.min(fruitFloorMaxPy(), lastPy));
+          z++;
+          hit.z = z;
+          hit.el.style.zIndex = String(hit.z);
+          return;
+        }
+      }
+      startHoldSpawn();
+    },
+    true
+  );
+
+  document.addEventListener('pointerup', function (e) {
+    if (e.button !== 0) return;
+    if (mode === MODE.PHYSICS) releasePhysicsGrab();
+    stopHoldSpawn();
+  });
+  document.addEventListener('pointercancel', function () {
+    if (mode === MODE.PHYSICS) releasePhysicsGrab();
+    stopHoldSpawn();
+  });
+  window.addEventListener('blur', function () {
+    if (mode === MODE.PHYSICS) releasePhysicsGrab();
+    stopHoldSpawn();
+  });
+
+  function loadManifest(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('bad');
+      return r.json();
+    });
+  }
+
+  loadManifest('links.json')
+    .catch(function () {
+      return loadManifest('../fruit%20links.json');
+    })
+    .then(function (data) {
+      if (!data || !data.images) throw new Error('Invalid JSON.');
+      return data;
+    })
+    .then(function (data) {
+      urls = data.images || [];
+      if (!urls.length) throw new Error('No images in JSON.');
+      lastPx = window.innerWidth / 2;
+      lastPy = Math.min(window.innerHeight / 2, fruitFloorMaxPy());
+      cursorX = lastPx;
+      cursorY = lastPy;
+      addFruit(lastPx, lastPy);
+      if (typeof DeviceOrientationEvent !== 'undefined' && !DeviceOrientationEvent.requestPermission) {
+        attachGyro();
+      }
+      requestAnimationFrame(loop);
+    })
+    .catch(function (e) {
+      errEl.hidden = false;
+      errEl.textContent =
+        (e && e.message ? e.message : String(e)) +
+        ' — run a server in this folder: python3 -m http.server 8080';
+    });
+})();
+  </script>
+</body>
+</html>
