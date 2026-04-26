@@ -125,24 +125,19 @@
       column-gap: 20px;
     }
     .mode-bar__controls-row {
-      grid-column: 2 / 4;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px 16px;
-      min-width: 0;
+      display: contents;
     }
     .mode-bar__modes {
-      flex: 1 1 auto;
-      min-width: 0;
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-column: 2;
+      justify-self: center;
+      display: flex;
+      flex-wrap: wrap;
       gap: 6px;
-      align-items: stretch;
+      justify-content: center;
     }
     .mode-bar__actions-icons {
-      flex-shrink: 0;
+      grid-column: 3;
+      justify-self: end;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -190,20 +185,13 @@
       font-size: 11px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      padding: 8px 4px;
+      padding: 8px 10px;
       border: 1px solid var(--btn-border);
       border-radius: 8px;
       background: var(--btn-bg);
       color: var(--btn-text);
       cursor: pointer;
       white-space: nowrap;
-      width: 100%;
-      min-width: 0;
-      min-height: 34px;
-      box-sizing: border-box;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
     #mode-bar button[data-mode]:hover {
       border-color: var(--btn-hover-border);
@@ -252,17 +240,31 @@
     html[data-theme='dark'] #theme-toggle .theme-icon--sun {
       display: block;
     }
-    .gyro-prompt {
+    #gyro-prompt {
       display: none;
-      flex: 1 1 100%;
       width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: var(--gyro-text);
+      padding: 4px 0 0;
+    }
+    #gyro-prompt.is-visible {
+      display: block;
+    }
+    #gyro-prompt button {
+      margin-left: 8px;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+      border: 1px solid var(--gyro-btn-border);
+      background: var(--gyro-btn-bg);
+      color: var(--gyro-btn-fg);
+      cursor: pointer;
+    }
+    .gyro-prompt__modern {
+      display: none;
       justify-content: center;
       align-items: center;
-      padding: 2px 0 0;
-      box-sizing: border-box;
-    }
-    .gyro-prompt.is-visible {
-      display: flex;
     }
     .gyro-switch {
       position: relative;
@@ -356,9 +358,9 @@
     #starter-hint {
       position: fixed;
       z-index: 120;
-      left: 0;
-      top: 0;
-      transform: translate(-50%, -100%);
+      left: 50%;
+      top: calc(max(16px, env(safe-area-inset-top, 0px)) + 420px);
+      transform: translateX(-50%);
       max-width: min(calc(340px * 3), calc(100vw - 48px));
       padding: 0 16px;
       pointer-events: none;
@@ -387,14 +389,15 @@
         height: 64px;
       }
       #starter-hint {
-        font-size: 1.575rem;
+        font-size: calc(1.575rem * 1.3);
         line-height: 1.35;
         max-width: min(92vw, 280px);
         padding: 0 12px;
         text-align: center;
+        top: max(12px, env(safe-area-inset-top, 0px));
       }
       #starter-hint .starter-hint__lead {
-        font-size: 1.68rem;
+        font-size: calc(1.68rem * 1.3);
         font-weight: 700;
         text-align: center;
       }
@@ -415,30 +418,44 @@
         grid-column: unset;
         order: 1;
         width: 100%;
-        align-items: start;
+        align-items: center;
         display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto auto;
-        gap: 8px 12px;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        gap: 10px 12px;
       }
-      .mode-bar__modes {
-        grid-column: 1 / -1;
+      /* Row 1: motion toggle (left), reset + theme (right); row 2: mode buttons */
+      #gyro-prompt {
+        grid-column: 1;
         grid-row: 1;
-        flex: unset;
+        justify-self: start;
+        align-self: center;
+        width: auto;
+        padding-top: 0;
+        text-align: left;
       }
       .mode-bar__actions-icons {
         grid-column: 2;
-        grid-row: 2;
+        grid-row: 1;
         justify-self: end;
+        align-self: center;
+        flex: unset;
+        flex-direction: row;
+        gap: 8px;
+      }
+      .mode-bar__modes {
+        grid-column: 1 / -1;
+        grid-row: 2;
         flex: unset;
       }
-      .gyro-prompt {
-        grid-column: 2;
-        grid-row: 3;
-        justify-self: center;
-        flex: unset;
-        width: auto;
-        padding-top: 4px;
+      #gyro-prompt.is-visible {
+        display: flex;
+      }
+      .gyro-prompt__legacy {
+        display: none !important;
+      }
+      .gyro-prompt__modern {
+        display: flex !important;
       }
       .mode-bar__credit-group {
         grid-column: unset;
@@ -451,7 +468,20 @@
         max-width: 100%;
       }
       .mode-bar__modes {
+        display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        align-items: stretch;
+      }
+      #mode-bar button[data-mode] {
+        padding: 8px 4px;
+        min-height: 34px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       .mode-bar__credit {
         white-space: normal;
@@ -529,21 +559,26 @@
         </div>
       </div>
     </div>
-    <div id="gyro-prompt" class="gyro-prompt" role="presentation">
-      <label class="gyro-switch">
-        <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
-        <span class="gyro-switch__track" aria-hidden="true"
-          ><span class="gyro-switch__thumb"
-            ><img
-              class="gyro-switch__thumb-icon"
-              src="motion-tilt-icon.jpg"
-              alt=""
-              width="14"
-              height="14"
-              decoding="async"
-          /></span
-        ></span>
-      </label>
+    <div id="gyro-prompt">
+      <span class="gyro-prompt__legacy"
+        >Tilt to steer in Physics mode <button type="button" id="gyro-enable">Enable motion</button></span
+      >
+      <div class="gyro-prompt__modern" role="presentation">
+        <label class="gyro-switch">
+          <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
+          <span class="gyro-switch__track" aria-hidden="true"
+            ><span class="gyro-switch__thumb"
+              ><img
+                class="gyro-switch__thumb-icon"
+                src="motion-tilt-icon.jpg"
+                alt=""
+                width="14"
+                height="14"
+                decoding="async"
+            /></span
+          ></span>
+        </label>
+      </div>
     </div>
   </nav>
   <p id="err" hidden></p>
@@ -555,6 +590,7 @@
   var starterHint = document.getElementById('starter-hint');
   var modeBar = document.getElementById('mode-bar');
   var gyroPrompt = document.getElementById('gyro-prompt');
+  var gyroBtn = document.getElementById('gyro-enable');
   var gyroToggle = document.getElementById('gyro-toggle');
   var resetBtn = document.getElementById('reset-fruits');
   var themeToggle = document.getElementById('theme-toggle');
@@ -613,6 +649,9 @@
   /** Max fruit center Y so the sprite bottom sits on the mode bar top (viewport coords). */
   function fruitFloorMaxPy() {
     if (!modeBar) return window.innerHeight - R;
+    if (!isMobileFruitScale()) {
+      return modeBar.getBoundingClientRect().top - R;
+    }
     var top = modeBar.getBoundingClientRect().top;
     if (floorBarTopStable == null) {
       floorBarTopStable = top;
@@ -668,7 +707,10 @@
   var DEFAULT_SPAWN_TRAD_BASE = 38;
   var DEFAULT_SPAWN_TRAD_SPAN = 78;
   var RAIN_JITTER_CAP = 64;
-  var STARTER_HINT_ABOVE_FRUIT = 88;
+  /** Minimum gap (px) between starter hint bottom and fruit sprite top. */
+  var STARTER_HINT_FRUIT_GAP = 32;
+  /** Extra room (px) so bob / jitter never brings the fruit into the hint. */
+  var LONE_FRUIT_BOB_ALLOW = 14;
 
   function isMobileFruitScale() {
     return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
@@ -705,7 +747,6 @@
       DEFAULT_SPAWN_TRAD_BASE = Math.round(38 * scale);
       DEFAULT_SPAWN_TRAD_SPAN = Math.round(78 * scale);
       RAIN_JITTER_CAP = Math.max(36, Math.round(64 * scale));
-      STARTER_HINT_ABOVE_FRUIT = Math.round(88 * scale);
       PHYS_COLL_ITERS = 10;
     } else {
       R = 60;
@@ -720,7 +761,6 @@
       DEFAULT_SPAWN_TRAD_BASE = 38;
       DEFAULT_SPAWN_TRAD_SPAN = 78;
       RAIN_JITTER_CAP = 64;
-      STARTER_HINT_ABOVE_FRUIT = 88;
       PHYS_COLL_ITERS = 4;
     }
   }
@@ -728,26 +768,29 @@
   /** Vertical center of the playable band (between top margin R and mode-bar floor). */
   function initialFruitCenterPy(viewportH) {
     var floor = fruitFloorMaxPy();
-    return Math.max(R, Math.min(floor, R + (floor - R) * 0.5));
+    if (isMobileFruitScale()) {
+      return Math.max(R, Math.min(floor, R + (floor - R) * 0.5));
+    }
+    return Math.min(viewportH / 2, floor);
   }
 
   function applyStarterViewportCenter() {
-    var cx = window.innerWidth * 0.5;
-    var cy = initialFruitCenterPy(window.innerHeight);
-    lastPx = cx;
-    lastPy = cy;
-    cursorX = cx;
-    cursorY = cy;
+    if (!isMobileFruitScale()) return;
+    var W0 = window.innerWidth;
+    var H0 = window.innerHeight;
+    var home = loneFruitPlayHome(W0, H0, fruitFloorMaxPy());
+    lastPx = home.cx;
+    lastPy = home.cy;
+    cursorX = home.cx;
+    cursorY = home.cy;
     if (items.length === 1) {
       var lone = items[0];
-      lone.bx = cx;
-      lone.by = cy;
-      lone.px = cx;
-      lone.py = cy;
+      lone.bx = home.cx;
+      lone.by = home.cy;
+      lone.px = home.cx;
+      lone.py = home.cy;
       lone.vx = 0;
       lone.vy = 0;
-      starterHintAnchorX = cx;
-      starterHintAnchorY = cy;
     }
   }
 
@@ -884,27 +927,44 @@
     }
   }
 
-  /** Screen position where the lone fruit was spawned; hint stays fixed here (does not follow motion). */
-  var starterHintAnchorX = null;
-  var starterHintAnchorY = null;
+  function starterHintBottomPx() {
+    if (!starterHint) return 48 + R;
+    if (!starterHint.hidden) {
+      return starterHint.getBoundingClientRect().bottom;
+    }
+    starterHint.hidden = false;
+    starterHint.style.visibility = 'hidden';
+    var bottom = starterHint.getBoundingClientRect().bottom;
+    starterHint.style.visibility = '';
+    starterHint.hidden = true;
+    return bottom;
+  }
+
+  function loneFruitDriftRadius() {
+    return Math.max(18, Math.round(R * 0.34));
+  }
+
+  /** Fixed play “home” for the lone fruit: viewport-centered X, Y in the band below the hint. */
+  function loneFruitPlayHome(W, H, floorY) {
+    var cx = W * 0.5;
+    var hintBottom = starterHintBottomPx();
+    var minCy = hintBottom + STARTER_HINT_FRUIT_GAP + R + LONE_FRUIT_BOB_ALLOW;
+    var maxCy = floorY;
+    var screenCy = H * 0.5;
+    var cy = Math.max(minCy, Math.min(maxCy, screenCy));
+    if (minCy > maxCy - 2) {
+      cy = Math.min(maxCy, Math.max(R, (minCy + maxCy) * 0.5));
+    }
+    return { cx: cx, cy: cy, minCy: minCy, maxCy: maxCy };
+  }
 
   function updateStarterHint() {
     if (!starterHint) return;
     if (items.length !== 1) {
       starterHint.hidden = true;
-      starterHintAnchorX = null;
-      starterHintAnchorY = null;
       return;
     }
-    if (starterHintAnchorX == null || starterHintAnchorY == null) {
-      var it0 = items[0];
-      starterHintAnchorX = it0.px != null ? it0.px : it0.bx;
-      starterHintAnchorY = it0.py != null ? it0.py : it0.by;
-    }
     starterHint.hidden = false;
-    starterHint.style.left = starterHintAnchorX + 'px';
-    starterHint.style.top = starterHintAnchorY - STARTER_HINT_ABOVE_FRUIT + 'px';
-    starterHint.style.transform = 'translate(-50%, -100%)';
   }
 
   function ensureSim(it, x, y) {
@@ -939,6 +999,10 @@
     if (mode === MODE.RAIN) {
       x = Math.random() * W0;
       y = -50 - Math.random() * 80;
+    } else if (items.length === 0) {
+      var hSpawn = loneFruitPlayHome(W0, H0, fruitFloorMaxPy());
+      x = hSpawn.cx;
+      y = hSpawn.cy;
     }
 
     var img = document.createElement('img');
@@ -967,22 +1031,27 @@
       it.rainExitPhase = false;
     } else if (mode === MODE.DEFAULT) {
       var floor0 = fruitFloorMaxPy();
-      var tAng = Math.random() * Math.PI * 2;
-      var tRad = DEFAULT_SPAWN_TRAD_BASE + Math.random() * DEFAULT_SPAWN_TRAD_SPAN;
-      it.bx = Math.max(R, Math.min(W0 - R, clientX + Math.cos(tAng) * tRad));
-      it.by = Math.max(R, Math.min(floor0, clientY + Math.sin(tAng) * tRad));
-      it.px = Math.max(R, Math.min(W0 - R, clientX + (Math.random() - 0.5) * 32));
-      it.py = Math.max(R, Math.min(floor0, clientY + (Math.random() - 0.5) * 32));
-      it.vx = (Math.random() - 0.5) * 110;
-      it.vy = (Math.random() - 0.5) * 110;
+      if (items.length === 0) {
+        it.bx = x;
+        it.by = y;
+        it.px = x + (Math.random() - 0.5) * 8;
+        it.py = y + (Math.random() - 0.5) * 8;
+        it.vx = (Math.random() - 0.5) * 85;
+        it.vy = (Math.random() - 0.5) * 85;
+      } else {
+        var tAng = Math.random() * Math.PI * 2;
+        var tRad = DEFAULT_SPAWN_TRAD_BASE + Math.random() * DEFAULT_SPAWN_TRAD_SPAN;
+        it.bx = Math.max(R, Math.min(W0 - R, clientX + Math.cos(tAng) * tRad));
+        it.by = Math.max(R, Math.min(floor0, clientY + Math.sin(tAng) * tRad));
+        it.px = Math.max(R, Math.min(W0 - R, clientX + (Math.random() - 0.5) * 32));
+        it.py = Math.max(R, Math.min(floor0, clientY + (Math.random() - 0.5) * 32));
+        it.vx = (Math.random() - 0.5) * 110;
+        it.vy = (Math.random() - 0.5) * 110;
+      }
     }
 
     items.push(it);
     img.style.zIndex = String(it.z);
-    if (items.length === 1) {
-      starterHintAnchorX = it.px != null ? it.px : it.bx;
-      starterHintAnchorY = it.py != null ? it.py : it.by;
-    }
     trimPhysicsFruitCount();
   }
 
@@ -1030,25 +1099,22 @@
     modeBlendT0 = 0;
     var W0 = window.innerWidth;
     var H0 = window.innerHeight;
-    var cx = W0 / 2;
-    var cy = initialFruitCenterPy(H0);
-    lastPx = cx;
-    lastPy = cy;
-    cursorX = cx;
-    cursorY = cy;
-    addFruit(cx, cy);
+    var homeR = loneFruitPlayHome(W0, H0, fruitFloorMaxPy());
+    lastPx = homeR.cx;
+    lastPy = homeR.cy;
+    cursorX = homeR.cx;
+    cursorY = homeR.cy;
+    addFruit(homeR.cx, homeR.cy);
     var lone = items[0];
     if (lone) {
-      lone.bx = cx;
-      lone.by = cy;
-      lone.px = cx;
-      lone.py = cy;
+      lone.bx = homeR.cx;
+      lone.by = homeR.cy;
+      lone.px = homeR.cx;
+      lone.py = homeR.cy;
       lone.vx = 0;
       lone.vy = 0;
       lone.rainExitPhase = false;
     }
-    starterHintAnchorX = cx;
-    starterHintAnchorY = cy;
     if (mode === MODE.SNAKE) {
       snakePoints = [{ x: cursorX, y: cursorY }];
       snakeSmoothX = cursorX;
@@ -1103,25 +1169,52 @@
       b.classList.toggle('is-active', b.getAttribute('data-mode') === mode);
     });
     if (gyroPrompt) {
-      gyroPrompt.classList.toggle(
-        'is-visible',
-        mode === MODE.PHYSICS && typeof DeviceOrientationEvent !== 'undefined'
-      );
-    }
-    if (gyroToggle && mode === MODE.PHYSICS) {
-      gyroToggle.checked = gyroMotionOn;
+      if (isMobileFruitScale()) {
+        gyroPrompt.classList.toggle(
+          'is-visible',
+          mode === MODE.PHYSICS && typeof DeviceOrientationEvent !== 'undefined'
+        );
+        if (gyroToggle && mode === MODE.PHYSICS) {
+          gyroToggle.checked = gyroMotionOn;
+        }
+      } else {
+        gyroPrompt.classList.toggle(
+          'is-visible',
+          mode === MODE.PHYSICS &&
+            typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function' &&
+            !gyroHandlerAttached
+        );
+      }
     }
 
     if (mode === MODE.SNAKE) {
+      if (items.length === 1) {
+        var Ws = window.innerWidth;
+        var Hs = window.innerHeight;
+        var sh = loneFruitPlayHome(Ws, Hs, fruitFloorMaxPy());
+        cursorX = sh.cx;
+        cursorY = sh.cy;
+        lastPx = sh.cx;
+        lastPy = sh.cy;
+      }
       snakePoints = [{ x: cursorX, y: cursorY }];
       snakeSmoothX = cursorX;
       snakeSmoothY = cursorY;
     }
-    if (mode === MODE.ORBIT && isMobileFruitScale()) {
+    if (mode === MODE.ORBIT) {
       var Wo = window.innerWidth;
       var Ho = window.innerHeight;
       var ocx = Wo * 0.5;
-      var ocy = initialFruitCenterPy(Ho);
+      var ocy;
+      if (items.length === 1) {
+        var oh = loneFruitPlayHome(Wo, Ho, fruitFloorMaxPy());
+        ocy = oh.cy;
+      } else if (isMobileFruitScale()) {
+        ocy = initialFruitCenterPy(Ho);
+      } else {
+        ocy = Math.min(Ho * 0.5, fruitFloorMaxPy());
+      }
       cursorX = ocx;
       cursorY = ocy;
       lastPx = ocx;
@@ -1196,22 +1289,26 @@
     window.addEventListener(
       'deviceorientation',
       function (e) {
-        if (mode !== MODE.PHYSICS || !gyroMotionOn) return;
+        if (mode !== MODE.PHYSICS) return;
+        if (isMobileFruitScale() && !gyroMotionOn) return;
         var g = e.gamma;
         var b = e.beta;
         if (g == null || b == null) return;
         if (isMobileFruitScale()) {
           var GAMMA_DIV = 36;
-          var BETA_NEUTRAL = 58;
-          var BETA_DIV = 52;
+          /* Bottom-heavy: resting bias + stronger response when the bottom of the phone leads the tilt. */
+          var BETA_NEUTRAL = 63;
+          var BETA_DIV = 48;
           var CAP = 1.05;
           var rawGx = g / GAMMA_DIV;
           var rawGy = (b - BETA_NEUTRAL) / BETA_DIV;
           var ax = Math.abs(rawGx);
           var ay = Math.abs(rawGy);
           var softGx = Math.sign(rawGx) * Math.pow(ax, 0.95);
-          var expY = rawGy >= 0 ? 0.92 : 1.22;
+          var expY = rawGy >= 0 ? 0.82 : 1.32;
           var softGy = Math.sign(rawGy) * Math.pow(ay, expY);
+          if (softGy > 0) softGy *= 1.12;
+          else if (softGy < 0) softGy *= 0.88;
           grav.x = Math.max(-CAP, Math.min(CAP, softGx));
           grav.y = Math.max(-CAP, Math.min(CAP, softGy));
         } else {
@@ -1222,6 +1319,24 @@
       true
     );
     gyroHandlerAttached = true;
+    if (!isMobileFruitScale() && gyroPrompt) {
+      gyroPrompt.classList.remove('is-visible');
+    }
+  }
+
+  if (gyroBtn) {
+    gyroBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        DeviceOrientationEvent.requestPermission()
+          .then(function (s) {
+            if (s === 'granted') attachGyro();
+          })
+          .catch(function () {});
+      } else {
+        attachGyro();
+      }
+    });
   }
 
   if (gyroToggle) {
@@ -1277,6 +1392,16 @@
     var W = window.innerWidth;
     var H = window.innerHeight;
     var floorY = fruitFloorMaxPy();
+
+    if (items.length === 1 && mode !== MODE.RAIN) {
+      var homeLoop = loneFruitPlayHome(W, H, floorY);
+      cursorX = homeLoop.cx;
+      cursorY = homeLoop.cy;
+      lastPx = homeLoop.cx;
+      lastPy = homeLoop.cy;
+      items[0].bx = homeLoop.cx;
+      items[0].by = homeLoop.cy;
+    }
 
     var cursorMove = Math.hypot(cursorX - loopPrevCx, cursorY - loopPrevCy);
 
@@ -1395,9 +1520,16 @@
           it.vx = 0;
           it.vy = 0;
         } else {
-          if (!gyroMotionOn || !gyroHandlerAttached) {
-            grav.x *= 0.96;
-            grav.y = grav.y * 0.96 + 0.95 * 0.06;
+          if (isMobileFruitScale()) {
+            if (!gyroMotionOn || !gyroHandlerAttached) {
+              grav.x *= 0.96;
+              grav.y = grav.y * 0.96 + 0.95 * 0.06;
+            }
+          } else {
+            if (!gyroHandlerAttached) {
+              grav.x *= 0.96;
+              grav.y = grav.y * 0.96 + 0.95 * 0.06;
+            }
           }
           var gx = grav.x * 1180;
           var gy = grav.y * 1180;
@@ -1550,6 +1682,27 @@
         }
       }
 
+      if (
+        items.length === 1 &&
+        mode !== MODE.RAIN &&
+        !(mode === MODE.PHYSICS && physicsGrab === it)
+      ) {
+        var lh = loneFruitPlayHome(W, H, floorY);
+        var driftR = loneFruitDriftRadius();
+        x = Math.max(lh.cx - driftR, Math.min(lh.cx + driftR, x));
+        x = Math.max(R, Math.min(W - R, x));
+        y = Math.max(lh.minCy, Math.min(floorY, y));
+        if (mode === MODE.DEFAULT) {
+          var cBobX = Math.sin(t * 0.9 + it.phase) * (5 + 4 * d);
+          var cBobY = Math.cos(t * 0.75 + it.phase * 1.3) * (4 + 3 * d);
+          it.px = x - cBobX;
+          it.py = Math.min(y - cBobY, floorY);
+        } else if (mode === MODE.PHYSICS || mode === MODE.VORTEX) {
+          it.px = x;
+          it.py = y;
+        }
+      }
+
       it.el.style.transform =
         'translate(-50%, -50%) translate(' + x + 'px,' + y + 'px) rotate(' + rot + 'deg)';
       it._drawX = x;
@@ -1674,17 +1827,36 @@
       urls = data.images || [];
       if (!urls.length) throw new Error('No images in JSON.');
       syncFruitScaleFromViewport();
-      requestAnimationFrame(function () {
-        syncFruitScaleFromViewport();
-        dockGyroPrompt();
-        lastPx = window.innerWidth * 0.5;
-        lastPy = initialFruitCenterPy(window.innerHeight);
+      dockGyroPrompt();
+      if (isMobileFruitScale()) {
+        requestAnimationFrame(function () {
+          syncFruitScaleFromViewport();
+          dockGyroPrompt();
+          var Wm = window.innerWidth;
+          var Hm = window.innerHeight;
+          var hm = loneFruitPlayHome(Wm, Hm, fruitFloorMaxPy());
+          lastPx = hm.cx;
+          lastPy = hm.cy;
+          cursorX = lastPx;
+          cursorY = lastPy;
+          addFruit(lastPx, lastPy);
+          applyStarterViewportCenter();
+          requestAnimationFrame(loop);
+        });
+      } else {
+        var Wd = window.innerWidth;
+        var Hd = window.innerHeight;
+        var hd = loneFruitPlayHome(Wd, Hd, fruitFloorMaxPy());
+        lastPx = hd.cx;
+        lastPy = hd.cy;
         cursorX = lastPx;
         cursorY = lastPy;
         addFruit(lastPx, lastPy);
-        applyStarterViewportCenter();
+        if (typeof DeviceOrientationEvent !== 'undefined' && !DeviceOrientationEvent.requestPermission) {
+          attachGyro();
+        }
         requestAnimationFrame(loop);
-      });
+      }
     })
     .catch(function (e) {
       errEl.hidden = false;
