@@ -406,13 +406,17 @@
         font-size: calc(1.68rem * 1.3);
         font-weight: 700;
         text-align: center;
-        white-space: normal;
       }
       .starter-hint__desk-text {
         display: none;
       }
       .starter-hint__mob-text {
         display: block;
+      }
+      .starter-hint__mob-line {
+        display: block;
+        white-space: nowrap;
+        line-height: inherit;
       }
       #mode-bar {
         padding: 10px 10px max(10px, env(safe-area-inset-bottom));
@@ -524,7 +528,10 @@
   <div id="starter-hint" hidden role="status">
     <p class="starter-hint__lead">
       <span class="starter-hint__desk-text">Click to add more fruit</span>
-      <span class="starter-hint__mob-text">click to add<br />more fruit</span>
+      <span class="starter-hint__mob-text">
+        <span class="starter-hint__mob-line">click to add</span>
+        <span class="starter-hint__mob-line">more fruit</span>
+      </span>
     </p>
   </div>
   <nav id="mode-bar" aria-label="Display mode">
@@ -1467,7 +1474,11 @@
     var H = window.innerHeight;
     var floorY = fruitFloorMaxPy();
 
-    if (items.length === 1 && mode !== MODE.RAIN) {
+    if (
+      items.length === 1 &&
+      mode !== MODE.RAIN &&
+      !(isMobileFruitScale() && mode === MODE.PHYSICS && gyroMotionOn)
+    ) {
       var homeLoop = loneFruitPlayHome(W, H, floorY);
       cursorX = homeLoop.cx;
       cursorY = homeLoop.cy;
@@ -1759,7 +1770,8 @@
       if (
         items.length === 1 &&
         mode !== MODE.RAIN &&
-        !(mode === MODE.PHYSICS && physicsGrab === it)
+        !(mode === MODE.PHYSICS && physicsGrab === it) &&
+        !(isMobileFruitScale() && mode === MODE.PHYSICS && gyroMotionOn)
       ) {
         var lh = loneFruitPlayHome(W, H, floorY);
         var driftR = loneFruitDriftRadius();
