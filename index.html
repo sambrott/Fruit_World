@@ -289,6 +289,9 @@
     #gyro-prompt.is-visible {
       display: block;
     }
+    #gyro-prompt[hidden] {
+      display: none !important;
+    }
     #gyro-prompt #gyro-enable {
       margin-left: 10px;
       padding: 5px 13px;
@@ -581,8 +584,10 @@
   var gyroPrompt = document.getElementById('gyro-prompt');
   var gyroBtn = document.getElementById('gyro-enable');
   var gyroToggle = document.getElementById('gyro-toggle');
+  /** When false, tilt prompt/button stay hidden and device orientation is never used (set true to re-enable). */
+  var ENABLE_TILT_CONTROL = false;
   function syncGyroToggleUi() {
-    if (!gyroToggle) return;
+    if (!ENABLE_TILT_CONTROL || !gyroToggle) return;
     gyroToggle.classList.toggle('is-on', gyroMotionOn);
     gyroToggle.setAttribute('aria-pressed', gyroMotionOn ? 'true' : 'false');
     gyroToggle.setAttribute(
@@ -718,7 +723,7 @@
   }
 
   function dockGyroPrompt() {
-    if (!gyroPrompt || !modeBar) return;
+    if (!ENABLE_TILT_CONTROL || !gyroPrompt || !modeBar) return;
     var toolbar = modeBar.querySelector('.mode-bar__toolbar');
     var icons = modeBar.querySelector('.mode-bar__actions-icons');
     if (!toolbar || !icons) return;
@@ -799,6 +804,11 @@
   }
 
   syncFruitScaleFromViewport();
+  if (!ENABLE_TILT_CONTROL && gyroPrompt) {
+    gyroPrompt.setAttribute('hidden', '');
+    gyroPrompt.setAttribute('aria-hidden', 'true');
+    gyroPrompt.classList.remove('is-visible');
+  }
   dockGyroPrompt();
   window.addEventListener('resize', function () {
     syncFruitScaleFromViewport();
@@ -1228,7 +1238,7 @@
     modeBar.querySelectorAll('button[data-mode]').forEach(function (b) {
       b.classList.toggle('is-active', b.getAttribute('data-mode') === mode);
     });
-    if (gyroPrompt) {
+    if (gyroPrompt && ENABLE_TILT_CONTROL) {
       if (isMobileFruitScale()) {
         gyroPrompt.classList.toggle(
           'is-visible',
@@ -1345,7 +1355,7 @@
   }
 
   function attachGyro() {
-    if (gyroHandlerAttached) return;
+    if (!ENABLE_TILT_CONTROL || gyroHandlerAttached) return;
     window.addEventListener(
       'deviceorientation',
       function (e) {
@@ -1385,7 +1395,7 @@
     }
   }
 
-  if (gyroBtn) {
+  if (ENABLE_TILT_CONTROL && gyroBtn) {
     gyroBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
@@ -1400,7 +1410,7 @@
     });
   }
 
-  if (gyroToggle) {
+  if (ENABLE_TILT_CONTROL && gyroToggle) {
     gyroToggle.addEventListener('click', function (e) {
       e.stopPropagation();
       if (gyroMotionOn) {
@@ -1917,7 +1927,11 @@
         cursorX = lastPx;
         cursorY = lastPy;
         addFruit(lastPx, lastPy);
-        if (typeof DeviceOrientationEvent !== 'undefined' && !DeviceOrientationEvent.requestPermission) {
+        if (
+          ENABLE_TILT_CONTROL &&
+          typeof DeviceOrientationEvent !== 'undefined' &&
+          !DeviceOrientationEvent.requestPermission
+        ) {
           attachGyro();
         }
         requestAnimationFrame(loop);
