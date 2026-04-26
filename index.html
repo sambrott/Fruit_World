@@ -235,6 +235,17 @@
       color: var(--icon-btn-hover-color);
       border-color: var(--icon-btn-hover-border);
     }
+    /* On: same treatment as #mode-bar button[data-mode].is-active */
+    #gyro-toggle.is-on {
+      background: var(--btn-active-bg);
+      color: var(--btn-active-text);
+      border-color: var(--btn-active-border);
+    }
+    #gyro-toggle.is-on:hover {
+      background: var(--btn-active-bg);
+      color: var(--btn-active-text);
+      border-color: var(--btn-hover-border);
+    }
     #theme-toggle svg,
     #reset-fruits svg {
       display: block;
@@ -250,6 +261,13 @@
     }
     html[data-theme='dark'] #gyro-toggle img {
       filter: invert(1);
+    }
+    /* Active chip is dark (light theme) or light (dark theme); keep glyph contrast. */
+    #gyro-toggle.is-on img {
+      filter: invert(1);
+    }
+    html[data-theme='dark'] #gyro-toggle.is-on img {
+      filter: none;
     }
     #theme-toggle .theme-icon--sun {
       display: none;
