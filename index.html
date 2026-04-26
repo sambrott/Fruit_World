@@ -400,9 +400,7 @@
         max-width: min(92vw, 280px);
         padding: 0 12px;
         text-align: center;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+        /* left / top / transform set in JS from lone fruit spawn */
       }
       #starter-hint .starter-hint__lead {
         font-size: calc(1.68rem * 1.3);
@@ -726,6 +724,8 @@
   var STARTER_HINT_FRUIT_GAP = 32;
   /** Extra room (px) so bob / jitter never brings the fruit into the hint. */
   var LONE_FRUIT_BOB_ALLOW = 14;
+  /** Mobile: estimated hero hint height (px) for layout before measure; two lines + padding. */
+  var MOBILE_HERO_HINT_EST_HEIGHT = 96;
 
   function isMobileFruitScale() {
     return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
@@ -817,10 +817,12 @@
   window.addEventListener('resize', function () {
     syncFruitScaleFromViewport();
     dockGyroPrompt();
+    updateStarterHint();
   });
   if (typeof window.visualViewport !== 'undefined') {
     window.visualViewport.addEventListener('resize', function () {
       floorBarTopStable = null;
+      updateStarterHint();
     });
     window.visualViewport.addEventListener('scroll', function () {
       floorBarTopStable = null;
@@ -958,12 +960,44 @@
     return bottom;
   }
 
+  function viewportSafeTopPx() {
+    var t = 12;
+    if (typeof window.visualViewport !== 'undefined' && window.visualViewport.offsetTop > 0) {
+      t = Math.max(t, window.visualViewport.offsetTop);
+    }
+    return t;
+  }
+
   function loneFruitDriftRadius() {
     return Math.max(18, Math.round(R * 0.34));
   }
 
-  /** Fixed play “home” for the lone fruit: viewport-centered X, Y in the band below the hint. */
+  /**
+   * Mobile: fruit center is the midpoint of the vertical play band (safe top + hint reserve → mode-bar floor).
+   * Hint is placed in JS just above that spawn point — no circular layout with getBoundingClientRect.
+   */
+  function loneFruitPlayHomeMobile(W, H, floorY) {
+    var cx = W * 0.5;
+    var safeTop = viewportSafeTopPx();
+    var minCy =
+      safeTop +
+      MOBILE_HERO_HINT_EST_HEIGHT +
+      STARTER_HINT_FRUIT_GAP +
+      R +
+      LONE_FRUIT_BOB_ALLOW;
+    var maxCy = floorY;
+    var cy = (minCy + maxCy) * 0.5;
+    if (minCy > maxCy - 2) {
+      cy = Math.min(maxCy, Math.max(R, (minCy + maxCy) * 0.5));
+    }
+    return { cx: cx, cy: cy, minCy: minCy, maxCy: maxCy };
+  }
+
+  /** Fixed play “home” for the lone fruit: viewport-centered X; Y from hint (desktop) or play band (mobile). */
   function loneFruitPlayHome(W, H, floorY) {
+    if (isMobileFruitScale()) {
+      return loneFruitPlayHomeMobile(W, H, floorY);
+    }
     var cx = W * 0.5;
     var hintBottom = starterHintBottomPx();
     var minCy = hintBottom + STARTER_HINT_FRUIT_GAP + R + LONE_FRUIT_BOB_ALLOW;
@@ -980,9 +1014,28 @@
     if (!starterHint) return;
     if (items.length !== 1) {
       starterHint.hidden = true;
+      if (isMobileFruitScale()) {
+        starterHint.style.left = '';
+        starterHint.style.top = '';
+        starterHint.style.transform = '';
+      }
       return;
     }
     starterHint.hidden = false;
+    if (isMobileFruitScale()) {
+      var W = window.innerWidth;
+      var H = window.innerHeight;
+      var floorY = fruitFloorMaxPy();
+      var home = loneFruitPlayHome(W, H, floorY);
+      var anchorY = home.cy - R - STARTER_HINT_FRUIT_GAP;
+      starterHint.style.left = home.cx + 'px';
+      starterHint.style.top = anchorY + 'px';
+      starterHint.style.transform = 'translate(-50%, -100%)';
+    } else {
+      starterHint.style.left = '';
+      starterHint.style.top = '';
+      starterHint.style.transform = '';
+    }
   }
 
   function ensureSim(it, x, y) {
@@ -1071,6 +1124,9 @@
     items.push(it);
     img.style.zIndex = String(it.z);
     trimPhysicsFruitCount();
+    if (items.length === 1) {
+      updateStarterHint();
+    }
   }
 
   function pathLengthFromHead(pts) {
