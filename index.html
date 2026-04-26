@@ -46,7 +46,6 @@
       --gyro-btn-fg: #f5ead8;
       --err: #b00020;
       --hint: #1a1510;
-      --gyro-thumb-bg: #fff;
     }
     html[data-theme='dark'] {
       color-scheme: dark;
@@ -73,7 +72,6 @@
       --gyro-btn-fg: #111;
       --err: #ff8a80;
       --hint: #f0ece8;
-      --gyro-thumb-bg: #f0f0f0;
     }
     html, body {
       height: 100%;
@@ -185,6 +183,9 @@
     a.mode-bar__download:hover {
       opacity: 1;
     }
+    .mode-bar__download--mobile {
+      display: none;
+    }
     #mode-bar button[data-mode] {
       font-size: 11px;
       letter-spacing: 0.04em;
@@ -285,7 +286,21 @@
       border-radius: 26px;
       transition: background 0.2s ease, border-color 0.2s ease;
     }
+    .gyro-switch__track::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+      transition: transform 0.2s ease;
+    }
     .gyro-switch__thumb {
+      display: none;
       position: absolute;
       width: 20px;
       height: 20px;
@@ -293,10 +308,9 @@
       top: 50%;
       margin-top: -10px;
       border-radius: 50%;
-      background: var(--gyro-thumb-bg);
+      background: #fff;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
       transition: transform 0.2s ease;
-      display: flex;
       align-items: center;
       justify-content: center;
       pointer-events: none;
@@ -313,6 +327,12 @@
     .gyro-switch input:checked + .gyro-switch__track {
       background: var(--btn-active-bg);
       border-color: var(--btn-active-border);
+    }
+    .gyro-switch input:checked + .gyro-switch__track::after {
+      transform: translate(18px, -50%);
+    }
+    html[data-theme='dark'] .gyro-switch input:checked + .gyro-switch__track::after {
+      background: #f0f0f0;
     }
     .gyro-switch input:checked + .gyro-switch__track .gyro-switch__thumb {
       transform: translateX(18px);
@@ -441,6 +461,23 @@
         white-space: normal;
         text-align: center;
       }
+      .mode-bar__download--desktop {
+        display: none;
+      }
+      .mode-bar__download--mobile {
+        display: inline;
+      }
+      .gyro-switch__track::after {
+        content: none;
+        display: none;
+      }
+      .gyro-switch__thumb {
+        display: flex;
+        background: #fff;
+      }
+      html[data-theme='dark'] .gyro-switch__thumb {
+        background: #f0f0f0;
+      }
     }
   </style>
 </head>
@@ -453,8 +490,11 @@
     <div class="mode-bar__main">
       <div class="mode-bar__credit-group">
         <p class="mode-bar__credit">© sam.brott 2026</p>
+        <a class="mode-bar__download mode-bar__download--desktop" href="fruit-sheet.png" download="fruit-sheet.png"
+          >source image</a
+        >
         <a
-          class="mode-bar__download"
+          class="mode-bar__download mode-bar__download--mobile"
           href="fruit-sheet.png"
           target="_blank"
           rel="noopener noreferrer"
@@ -487,23 +527,23 @@
             </svg>
           </button>
         </div>
-        <div id="gyro-prompt" class="gyro-prompt" role="presentation">
-          <label class="gyro-switch">
-            <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
-            <span class="gyro-switch__track" aria-hidden="true"
-              ><span class="gyro-switch__thumb"
-                ><img
-                  class="gyro-switch__thumb-icon"
-                  src="motion-tilt-icon.jpg"
-                  alt=""
-                  width="14"
-                  height="14"
-                  decoding="async"
-              /></span
-            ></span>
-          </label>
-        </div>
       </div>
+    </div>
+    <div id="gyro-prompt" class="gyro-prompt" role="presentation">
+      <label class="gyro-switch">
+        <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
+        <span class="gyro-switch__track" aria-hidden="true"
+          ><span class="gyro-switch__thumb"
+            ><img
+              class="gyro-switch__thumb-icon"
+              src="motion-tilt-icon.jpg"
+              alt=""
+              width="14"
+              height="14"
+              decoding="async"
+          /></span
+        ></span>
+      </label>
     </div>
   </nav>
   <p id="err" hidden></p>
@@ -634,6 +674,17 @@
     return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
   }
 
+  function dockGyroPrompt() {
+    if (!gyroPrompt || !modeBar) return;
+    var row = modeBar.querySelector('.mode-bar__controls-row');
+    if (!row) return;
+    if (isMobileFruitScale()) {
+      row.appendChild(gyroPrompt);
+    } else {
+      modeBar.appendChild(gyroPrompt);
+    }
+  }
+
   function physMaxFruit() {
     return isMobileFruitScale() ? PHYS_MAX_FRUIT_MOBILE : PHYS_MAX_FRUIT_DESKTOP;
   }
@@ -701,8 +752,10 @@
   }
 
   syncFruitScaleFromViewport();
+  dockGyroPrompt();
   window.addEventListener('resize', function () {
     syncFruitScaleFromViewport();
+    dockGyroPrompt();
   });
   if (typeof window.visualViewport !== 'undefined') {
     window.visualViewport.addEventListener('resize', function () {
@@ -1140,10 +1193,6 @@
 
   function attachGyro() {
     if (gyroHandlerAttached) return;
-    var GAMMA_DIV = 36;
-    var BETA_NEUTRAL = 58;
-    var BETA_DIV = 52;
-    var CAP = 1.05;
     window.addEventListener(
       'deviceorientation',
       function (e) {
@@ -1151,16 +1200,24 @@
         var g = e.gamma;
         var b = e.beta;
         if (g == null || b == null) return;
-        var rawGx = g / GAMMA_DIV;
-        var rawGy = (b - BETA_NEUTRAL) / BETA_DIV;
-        var ax = Math.abs(rawGx);
-        var ay = Math.abs(rawGy);
-        var softGx = Math.sign(rawGx) * Math.pow(ax, 0.95);
-        /* Negative rawGy (typical “top-up” tilt) was too strong; damp it more than downward. */
-        var expY = rawGy >= 0 ? 0.92 : 1.22;
-        var softGy = Math.sign(rawGy) * Math.pow(ay, expY);
-        grav.x = Math.max(-CAP, Math.min(CAP, softGx));
-        grav.y = Math.max(-CAP, Math.min(CAP, softGy));
+        if (isMobileFruitScale()) {
+          var GAMMA_DIV = 36;
+          var BETA_NEUTRAL = 58;
+          var BETA_DIV = 52;
+          var CAP = 1.05;
+          var rawGx = g / GAMMA_DIV;
+          var rawGy = (b - BETA_NEUTRAL) / BETA_DIV;
+          var ax = Math.abs(rawGx);
+          var ay = Math.abs(rawGy);
+          var softGx = Math.sign(rawGx) * Math.pow(ax, 0.95);
+          var expY = rawGy >= 0 ? 0.92 : 1.22;
+          var softGy = Math.sign(rawGy) * Math.pow(ay, expY);
+          grav.x = Math.max(-CAP, Math.min(CAP, softGx));
+          grav.y = Math.max(-CAP, Math.min(CAP, softGy));
+        } else {
+          grav.x = Math.max(-1.2, Math.min(1.2, g / 25));
+          grav.y = Math.max(-1.2, Math.min(1.2, (b - 50) / 25));
+        }
       },
       true
     );
@@ -1384,21 +1441,28 @@
         // Same outer envelope as before, but radii fill from center so there is no hollow core.
         var ringGrow = 20 + Math.sqrt(Math.max(1, n)) * 4.5 + Math.min(72, n * 0.42);
         var maxLayers = n > 0 ? ((n - 1) / 12) | 0 : 0;
-        var rMaxRaw = ringGrow + 11 * 6.5 + maxLayers * 4.5;
+        var rMax = ringGrow + 11 * 6.5 + maxLayers * 4.5;
         var rMin = 3;
-        var orbitM = 8;
-        var orbitCap = Math.min(
-          cursorX - R - orbitM,
-          W - R - cursorX - orbitM,
-          cursorY - R - orbitM,
-          floorY - cursorY - orbitM
-        );
-        var rMax = Math.max(rMin, Math.min(rMaxRaw, orbitCap));
+        if (isMobileFruitScale()) {
+          var rMaxRaw = rMax;
+          var orbitM = 8;
+          var orbitCap = Math.min(
+            cursorX - R - orbitM,
+            W - R - cursorX - orbitM,
+            cursorY - R - orbitM,
+            floorY - cursorY - orbitM
+          );
+          rMax = Math.max(rMin, Math.min(rMaxRaw, orbitCap));
+        }
         var ang = t * 1.1 + i * 0.62;
         var rad =
           n <= 1 ? rMin : rMin + (rMax - rMin) * Math.sqrt(i / (n - 1));
         x = cursorX + Math.cos(ang) * rad;
-        y = Math.max(R, Math.min(floorY, cursorY + Math.sin(ang) * rad));
+        if (isMobileFruitScale()) {
+          y = Math.max(R, Math.min(floorY, cursorY + Math.sin(ang) * rad));
+        } else {
+          y = Math.min(cursorY + Math.sin(ang) * rad, floorY);
+        }
         rot = ang * (180 / Math.PI) + 90;
       } else if (mode === MODE.RAIN) {
         it.vy += RAIN_GRAVITY * dt;
@@ -1612,6 +1676,7 @@
       syncFruitScaleFromViewport();
       requestAnimationFrame(function () {
         syncFruitScaleFromViewport();
+        dockGyroPrompt();
         lastPx = window.innerWidth * 0.5;
         lastPy = initialFruitCenterPy(window.innerHeight);
         cursorX = lastPx;
