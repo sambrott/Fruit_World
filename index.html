@@ -46,6 +46,7 @@
       --gyro-btn-fg: #f5ead8;
       --err: #b00020;
       --hint: #1a1510;
+      --gyro-thumb-bg: #fff;
     }
     html[data-theme='dark'] {
       color-scheme: dark;
@@ -72,6 +73,7 @@
       --gyro-btn-fg: #111;
       --err: #ff8a80;
       --hint: #f0ece8;
+      --gyro-thumb-bg: #f0f0f0;
     }
     html, body {
       height: 100%;
@@ -283,28 +285,37 @@
       border-radius: 26px;
       transition: background 0.2s ease, border-color 0.2s ease;
     }
-    .gyro-switch__track::after {
-      content: '';
+    .gyro-switch__thumb {
       position: absolute;
       width: 20px;
       height: 20px;
       left: 2px;
       top: 50%;
-      transform: translateY(-50%);
-      background: #fff;
+      margin-top: -10px;
       border-radius: 50%;
+      background: var(--gyro-thumb-bg);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
       transition: transform 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .gyro-switch__thumb-icon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+      mix-blend-mode: darken;
+      opacity: 0.92;
+      filter: contrast(1.15);
     }
     .gyro-switch input:checked + .gyro-switch__track {
       background: var(--btn-active-bg);
       border-color: var(--btn-active-border);
     }
-    .gyro-switch input:checked + .gyro-switch__track::after {
-      transform: translate(18px, -50%);
-    }
-    html[data-theme='dark'] .gyro-switch input:checked + .gyro-switch__track::after {
-      background: #f0f0f0;
+    .gyro-switch input:checked + .gyro-switch__track .gyro-switch__thumb {
+      transform: translateX(18px);
     }
     .gyro-switch input:focus-visible + .gyro-switch__track {
       outline: 2px solid var(--btn-hover-border);
@@ -442,7 +453,13 @@
     <div class="mode-bar__main">
       <div class="mode-bar__credit-group">
         <p class="mode-bar__credit">© sam.brott 2026</p>
-        <a class="mode-bar__download" href="fruit-sheet.png" download="fruit-sheet.png">source image</a>
+        <a
+          class="mode-bar__download"
+          href="fruit-sheet.png"
+          target="_blank"
+          rel="noopener noreferrer"
+          >source image</a
+        >
       </div>
       <div class="mode-bar__controls-row">
         <div class="mode-bar__modes">
@@ -473,7 +490,17 @@
         <div id="gyro-prompt" class="gyro-prompt" role="presentation">
           <label class="gyro-switch">
             <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
-            <span class="gyro-switch__track" aria-hidden="true"></span>
+            <span class="gyro-switch__track" aria-hidden="true"
+              ><span class="gyro-switch__thumb"
+                ><img
+                  class="gyro-switch__thumb-icon"
+                  src="motion-tilt-icon.jpg"
+                  alt=""
+                  width="14"
+                  height="14"
+                  decoding="async"
+              /></span
+            ></span>
           </label>
         </div>
       </div>
@@ -1037,6 +1064,18 @@
       snakeSmoothX = cursorX;
       snakeSmoothY = cursorY;
     }
+    if (mode === MODE.ORBIT && isMobileFruitScale()) {
+      var Wo = window.innerWidth;
+      var Ho = window.innerHeight;
+      var ocx = Wo * 0.5;
+      var ocy = initialFruitCenterPy(Ho);
+      cursorX = ocx;
+      cursorY = ocy;
+      lastPx = ocx;
+      lastPy = ocy;
+      loopPrevCx = ocx;
+      loopPrevCy = ocy;
+    }
     if (mode === MODE.PHYSICS) {
       trimPhysicsFruitCount();
     }
@@ -1101,6 +1140,10 @@
 
   function attachGyro() {
     if (gyroHandlerAttached) return;
+    var GAMMA_DIV = 36;
+    var BETA_NEUTRAL = 58;
+    var BETA_DIV = 52;
+    var CAP = 1.05;
     window.addEventListener(
       'deviceorientation',
       function (e) {
@@ -1108,8 +1151,16 @@
         var g = e.gamma;
         var b = e.beta;
         if (g == null || b == null) return;
-        grav.x = Math.max(-1.2, Math.min(1.2, g / 25));
-        grav.y = Math.max(-1.2, Math.min(1.2, (b - 50) / 25));
+        var rawGx = g / GAMMA_DIV;
+        var rawGy = (b - BETA_NEUTRAL) / BETA_DIV;
+        var ax = Math.abs(rawGx);
+        var ay = Math.abs(rawGy);
+        var softGx = Math.sign(rawGx) * Math.pow(ax, 0.95);
+        /* Negative rawGy (typical “top-up” tilt) was too strong; damp it more than downward. */
+        var expY = rawGy >= 0 ? 0.92 : 1.22;
+        var softGy = Math.sign(rawGy) * Math.pow(ay, expY);
+        grav.x = Math.max(-CAP, Math.min(CAP, softGx));
+        grav.y = Math.max(-CAP, Math.min(CAP, softGy));
       },
       true
     );
@@ -1333,13 +1384,21 @@
         // Same outer envelope as before, but radii fill from center so there is no hollow core.
         var ringGrow = 20 + Math.sqrt(Math.max(1, n)) * 4.5 + Math.min(72, n * 0.42);
         var maxLayers = n > 0 ? ((n - 1) / 12) | 0 : 0;
-        var rMax = ringGrow + 11 * 6.5 + maxLayers * 4.5;
+        var rMaxRaw = ringGrow + 11 * 6.5 + maxLayers * 4.5;
         var rMin = 3;
+        var orbitM = 8;
+        var orbitCap = Math.min(
+          cursorX - R - orbitM,
+          W - R - cursorX - orbitM,
+          cursorY - R - orbitM,
+          floorY - cursorY - orbitM
+        );
+        var rMax = Math.max(rMin, Math.min(rMaxRaw, orbitCap));
         var ang = t * 1.1 + i * 0.62;
         var rad =
           n <= 1 ? rMin : rMin + (rMax - rMin) * Math.sqrt(i / (n - 1));
         x = cursorX + Math.cos(ang) * rad;
-        y = Math.min(cursorY + Math.sin(ang) * rad, floorY);
+        y = Math.max(R, Math.min(floorY, cursorY + Math.sin(ang) * rad));
         rot = ang * (180 / Math.PI) + 90;
       } else if (mode === MODE.RAIN) {
         it.vy += RAIN_GRAVITY * dt;
