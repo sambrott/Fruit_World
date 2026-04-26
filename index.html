@@ -124,17 +124,24 @@
       align-items: center;
       column-gap: 20px;
     }
+    .mode-bar__controls-row {
+      grid-column: 2 / 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+    }
     .mode-bar__modes {
-      grid-column: 2;
-      justify-self: center;
+      flex: 1;
+      min-width: 0;
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       justify-content: center;
     }
     .mode-bar__actions {
-      grid-column: 3;
-      justify-self: end;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -288,12 +295,72 @@
       font-weight: 700;
       margin: 0;
     }
+    .starter-hint__break {
+      display: none;
+    }
+
+    /* Mobile: smaller fruit, centered hint, credits under controls */
+    @media (max-width: 640px) {
+      .fruit {
+        width: 40px;
+        height: 40px;
+      }
+      #starter-hint {
+        font-size: 1.575rem;
+        line-height: 1.35;
+        max-width: min(92vw, 280px);
+        padding: 0 12px;
+        text-align: center;
+      }
+      #starter-hint .starter-hint__lead {
+        font-size: 1.68rem;
+        font-weight: 700;
+        text-align: center;
+      }
+      .starter-hint__break {
+        display: inline;
+      }
+      #mode-bar {
+        padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+      }
+      .mode-bar__main {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        column-gap: 0;
+      }
+      .mode-bar__controls-row {
+        grid-column: unset;
+        order: 1;
+        width: 100%;
+        align-items: flex-start;
+      }
+      .mode-bar__credit-group {
+        grid-column: unset;
+        order: 2;
+        justify-content: center;
+        align-self: center;
+        padding-right: 0;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        max-width: 100%;
+      }
+      .mode-bar__credit {
+        white-space: normal;
+        text-align: center;
+      }
+      a.mode-bar__download {
+        white-space: normal;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="stage" aria-label="Fruit canvas"></div>
   <div id="starter-hint" hidden role="status">
-    <p class="starter-hint__lead">Click to add more fruit</p>
+    <p class="starter-hint__lead">Click to add<br class="starter-hint__break" /> more fruit</p>
   </div>
   <nav id="mode-bar" aria-label="Display mode">
     <div class="mode-bar__main">
@@ -301,30 +368,32 @@
         <p class="mode-bar__credit">© sam.brott 2026</p>
         <a class="mode-bar__download" href="fruit-sheet.png" download="fruit-sheet.png">source image</a>
       </div>
-      <div class="mode-bar__modes">
-        <button type="button" data-mode="default" class="is-active">Default</button>
-        <button type="button" data-mode="physics">Physics</button>
-        <button type="button" data-mode="snake">Snake</button>
-        <button type="button" data-mode="orbit">Orbit</button>
-        <button type="button" data-mode="rain">Rain</button>
-        <button type="button" data-mode="vortex">Vortex</button>
-      </div>
-      <div class="mode-bar__actions">
-        <button type="button" id="reset-fruits" aria-label="Reset to one fruit in the center" title="Reset">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-          </svg>
-        </button>
-        <button type="button" id="theme-toggle" aria-label="Switch to dark mode" title="Theme">
-          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-          </svg>
-        </button>
+      <div class="mode-bar__controls-row">
+        <div class="mode-bar__modes">
+          <button type="button" data-mode="default" class="is-active">Default</button>
+          <button type="button" data-mode="physics">Physics</button>
+          <button type="button" data-mode="snake">Snake</button>
+          <button type="button" data-mode="orbit">Orbit</button>
+          <button type="button" data-mode="rain">Rain</button>
+          <button type="button" data-mode="vortex">Vortex</button>
+        </div>
+        <div class="mode-bar__actions">
+          <button type="button" id="reset-fruits" aria-label="Reset to one fruit in the center" title="Reset">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+          </button>
+          <button type="button" id="theme-toggle" aria-label="Switch to dark mode" title="Theme">
+            <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
     <div id="gyro-prompt">Tilt to steer in Physics mode <button type="button" id="gyro-enable">Enable motion</button></div>
@@ -393,7 +462,7 @@
   var holdTimer = null;
 
   var R = 60;
-  /** Max fruit center Y so the 120px sprite sits on the mode bar top (viewport coords). */
+  /** Max fruit center Y so the sprite bottom sits on the mode bar top (viewport coords). */
   function fruitFloorMaxPy() {
     if (!modeBar) return window.innerHeight - R;
     return modeBar.getBoundingClientRect().top - R;
@@ -433,6 +502,59 @@
   var modeBlendT0 = 0;
   var loopPrevCx = cursorX;
   var loopPrevCy = cursorY;
+  var VORTEX_SEP_RADIUS = 78;
+  var DEFAULT_SPAWN_TRAD_BASE = 38;
+  var DEFAULT_SPAWN_TRAD_SPAN = 78;
+  var RAIN_JITTER_CAP = 64;
+  var STARTER_HINT_ABOVE_FRUIT = 88;
+
+  function isMobileFruitScale() {
+    return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+  }
+
+  function syncFruitScaleFromViewport() {
+    if (isMobileFruitScale()) {
+      R = 20;
+      PHYS_PICK_R = 22;
+      SNAKE_SPACING = 18;
+      DEFAULT_FF_RADIUS = 72;
+      DEFAULT_SEP_RADIUS = 21;
+      DEFAULT_SCATTER_MIN_CELL = 28;
+      DEFAULT_HOME_DEAD = 7;
+      VORTEX_SEP_RADIUS = 26;
+      DEFAULT_SPAWN_TRAD_BASE = 13;
+      DEFAULT_SPAWN_TRAD_SPAN = 26;
+      RAIN_JITTER_CAP = 22;
+      STARTER_HINT_ABOVE_FRUIT = 30;
+    } else {
+      R = 60;
+      PHYS_PICK_R = 64;
+      SNAKE_SPACING = 52;
+      DEFAULT_FF_RADIUS = 215;
+      DEFAULT_SEP_RADIUS = 62;
+      DEFAULT_SCATTER_MIN_CELL = 84;
+      DEFAULT_HOME_DEAD = 20;
+      VORTEX_SEP_RADIUS = 78;
+      DEFAULT_SPAWN_TRAD_BASE = 38;
+      DEFAULT_SPAWN_TRAD_SPAN = 78;
+      RAIN_JITTER_CAP = 64;
+      STARTER_HINT_ABOVE_FRUIT = 88;
+    }
+  }
+
+  /** Vertical center for the lone starter fruit: mid “play” band on mobile. */
+  function initialFruitCenterPy(viewportH) {
+    var floor = fruitFloorMaxPy();
+    if (isMobileFruitScale()) {
+      return Math.max(R, Math.min(floor, R + (floor - R) * 0.45));
+    }
+    return Math.min(viewportH / 2, floor);
+  }
+
+  syncFruitScaleFromViewport();
+  window.addEventListener('resize', function () {
+    syncFruitScaleFromViewport();
+  });
 
   function pickUrl() {
     return urls[(Math.random() * urls.length) | 0];
@@ -555,7 +677,6 @@
   /** Screen position where the lone fruit was spawned; hint stays fixed here (does not follow motion). */
   var starterHintAnchorX = null;
   var starterHintAnchorY = null;
-  var STARTER_HINT_ABOVE_FRUIT = 88;
 
   function updateStarterHint() {
     if (!starterHint) return;
@@ -593,7 +714,7 @@
     if (u < 0) u += 1;
     if (v < 0) v += 1;
     if (w < 0) w += 1;
-    var jitterX = (Math.random() - 0.5) * Math.min(64, W * 0.065);
+    var jitterX = (Math.random() - 0.5) * Math.min(RAIN_JITTER_CAP, W * 0.065);
     it.px = Math.max(R, Math.min(W - R, u * W + jitterX));
     it.py = -R - 32 - v * 130 - w * 85 - spread;
     it.vy = 300 + w * 440 + (Math.random() - 0.5) * 70;
@@ -637,7 +758,7 @@
     } else if (mode === MODE.DEFAULT) {
       var floor0 = fruitFloorMaxPy();
       var tAng = Math.random() * Math.PI * 2;
-      var tRad = 38 + Math.random() * 78;
+      var tRad = DEFAULT_SPAWN_TRAD_BASE + Math.random() * DEFAULT_SPAWN_TRAD_SPAN;
       it.bx = Math.max(R, Math.min(W0 - R, clientX + Math.cos(tAng) * tRad));
       it.by = Math.max(R, Math.min(floor0, clientY + Math.sin(tAng) * tRad));
       it.px = Math.max(R, Math.min(W0 - R, clientX + (Math.random() - 0.5) * 32));
@@ -700,7 +821,7 @@
     var W0 = window.innerWidth;
     var H0 = window.innerHeight;
     var cx = W0 / 2;
-    var cy = Math.min(H0 / 2, fruitFloorMaxPy());
+    var cy = initialFruitCenterPy(H0);
     lastPx = cx;
     lastPy = cy;
     cursorX = cx;
@@ -1088,7 +1209,7 @@
       } else if (mode === MODE.VORTEX) {
         var sepX = 0;
         var sepY = 0;
-        var sepR = 78;
+        var sepR = VORTEX_SEP_RADIUS;
         for (var j = 0; j < items.length; j++) {
           if (j === i) continue;
           var o = items[j];
@@ -1282,8 +1403,9 @@
     .then(function (data) {
       urls = data.images || [];
       if (!urls.length) throw new Error('No images in JSON.');
+      syncFruitScaleFromViewport();
       lastPx = window.innerWidth / 2;
-      lastPy = Math.min(window.innerHeight / 2, fruitFloorMaxPy());
+      lastPy = initialFruitCenterPy(window.innerHeight);
       cursorX = lastPx;
       cursorY = lastPy;
       addFruit(lastPx, lastPy);
