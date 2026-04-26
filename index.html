@@ -302,8 +302,8 @@
     /* Mobile: smaller fruit, centered hint, credits under controls */
     @media (max-width: 640px) {
       .fruit {
-        width: 40px;
-        height: 40px;
+        width: 80px;
+        height: 80px;
       }
       #starter-hint {
         font-size: 1.575rem;
@@ -465,7 +465,14 @@
   /** Max fruit center Y so the sprite bottom sits on the mode bar top (viewport coords). */
   function fruitFloorMaxPy() {
     if (!modeBar) return window.innerHeight - R;
-    return modeBar.getBoundingClientRect().top - R;
+    var top = modeBar.getBoundingClientRect().top;
+    if (floorBarTopStable == null) {
+      floorBarTopStable = top;
+    } else {
+      var d = top - floorBarTopStable;
+      if (Math.abs(d) >= 2) floorBarTopStable = top;
+    }
+    return floorBarTopStable - R;
   }
   var grav = { x: 0, y: 0.95 };
   var gyroHandlerAttached = false;
@@ -479,6 +486,9 @@
   var PHYS_FRUIT_RESTITUTION = 0.58;
   var PHYS_COLL_ITERS = 4;
   var PHYS_MAX_FRUIT = 150;
+
+  /** Ignore subpixel / chrome UI jitter in mode-bar top (stabilizes physics floor on mobile). */
+  var floorBarTopStable = null;
 
   var snakePoints = [];
   var snakeSmoothX = cursorX;
@@ -513,21 +523,26 @@
   }
 
   function syncFruitScaleFromViewport() {
+    floorBarTopStable = null;
+    var scale;
     if (isMobileFruitScale()) {
-      R = 20;
-      PHYS_PICK_R = 22;
-      SNAKE_SPACING = 18;
-      DEFAULT_FF_RADIUS = 72;
-      DEFAULT_SEP_RADIUS = 21;
-      DEFAULT_SCATTER_MIN_CELL = 28;
-      DEFAULT_HOME_DEAD = 7;
-      VORTEX_SEP_RADIUS = 26;
-      DEFAULT_SPAWN_TRAD_BASE = 13;
-      DEFAULT_SPAWN_TRAD_SPAN = 26;
-      RAIN_JITTER_CAP = 22;
-      STARTER_HINT_ABOVE_FRUIT = 30;
+      R = 40;
+      scale = R / 60;
+      PHYS_PICK_R = Math.max(36, Math.round(64 * scale));
+      SNAKE_SPACING = Math.max(26, Math.round(52 * scale));
+      DEFAULT_FF_RADIUS = Math.round(215 * scale);
+      DEFAULT_SEP_RADIUS = Math.max(36, Math.round(62 * scale));
+      DEFAULT_SCATTER_MIN_CELL = Math.max(48, Math.round(84 * scale));
+      DEFAULT_HOME_DEAD = Math.max(12, Math.round(20 * scale));
+      VORTEX_SEP_RADIUS = Math.max(48, Math.round(78 * scale));
+      DEFAULT_SPAWN_TRAD_BASE = Math.round(38 * scale);
+      DEFAULT_SPAWN_TRAD_SPAN = Math.round(78 * scale);
+      RAIN_JITTER_CAP = Math.max(36, Math.round(64 * scale));
+      STARTER_HINT_ABOVE_FRUIT = Math.round(88 * scale);
+      PHYS_COLL_ITERS = 10;
     } else {
       R = 60;
+      scale = 1;
       PHYS_PICK_R = 64;
       SNAKE_SPACING = 52;
       DEFAULT_FF_RADIUS = 215;
@@ -539,6 +554,7 @@
       DEFAULT_SPAWN_TRAD_SPAN = 78;
       RAIN_JITTER_CAP = 64;
       STARTER_HINT_ABOVE_FRUIT = 88;
+      PHYS_COLL_ITERS = 4;
     }
   }
 
@@ -555,6 +571,14 @@
   window.addEventListener('resize', function () {
     syncFruitScaleFromViewport();
   });
+  if (typeof window.visualViewport !== 'undefined') {
+    window.visualViewport.addEventListener('resize', function () {
+      floorBarTopStable = null;
+    });
+    window.visualViewport.addEventListener('scroll', function () {
+      floorBarTopStable = null;
+    });
+  }
 
   function pickUrl() {
     return urls[(Math.random() * urls.length) | 0];
