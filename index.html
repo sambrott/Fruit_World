@@ -302,8 +302,8 @@
     /* Mobile: smaller fruit, centered hint, credits under controls */
     @media (max-width: 640px) {
       .fruit {
-        width: 80px;
-        height: 80px;
+        width: 64px;
+        height: 64px;
       }
       #starter-hint {
         font-size: 1.575rem;
@@ -485,7 +485,9 @@
   var PHYS_THROW_MUL = 1.28;
   var PHYS_FRUIT_RESTITUTION = 0.58;
   var PHYS_COLL_ITERS = 4;
-  var PHYS_MAX_FRUIT = 150;
+  /** Physics mode fruit cap (desktop unchanged). Mobile cap is tuned separately. */
+  var PHYS_MAX_FRUIT_DESKTOP = 150;
+  var PHYS_MAX_FRUIT_MOBILE = 100;
 
   /** Ignore subpixel / chrome UI jitter in mode-bar top (stabilizes physics floor on mobile). */
   var floorBarTopStable = null;
@@ -522,11 +524,15 @@
     return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
   }
 
+  function physMaxFruit() {
+    return isMobileFruitScale() ? PHYS_MAX_FRUIT_MOBILE : PHYS_MAX_FRUIT_DESKTOP;
+  }
+
   function syncFruitScaleFromViewport() {
     floorBarTopStable = null;
     var scale;
     if (isMobileFruitScale()) {
-      R = 40;
+      R = 32;
       scale = R / 60;
       PHYS_PICK_R = Math.max(36, Math.round(64 * scale));
       SNAKE_SPACING = Math.max(26, Math.round(52 * scale));
@@ -872,7 +878,7 @@
 
   function trimPhysicsFruitCount() {
     if (mode !== MODE.PHYSICS) return;
-    while (items.length > PHYS_MAX_FRUIT) {
+    while (items.length > physMaxFruit()) {
       var victim = items.shift();
       if (physicsGrab === victim) {
         physicsGrab = null;
