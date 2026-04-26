@@ -237,6 +237,7 @@
     }
     #theme-toggle svg,
     #reset-fruits svg,
+    #gyro-toggle picture,
     #gyro-toggle img {
       display: block;
       width: 18px;
@@ -390,9 +391,15 @@
       }
       #theme-toggle svg,
       #reset-fruits svg,
+      #gyro-toggle picture,
       #gyro-toggle img {
         width: 18px;
         height: 18px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+      html[data-theme='dark'] #gyro-toggle img {
+        filter: invert(1);
       }
       .mode-bar__main {
         display: flex;
@@ -547,7 +554,10 @@
       >
       <div class="gyro-prompt__modern" role="presentation">
         <button type="button" id="gyro-toggle" aria-pressed="false" aria-label="Tilt steering off">
-          <img src="motion-tilt-icon.jpg" alt="" width="18" height="18" decoding="async" />
+          <picture>
+            <source media="(max-width: 640px)" srcset="motion-tilt-icon.png" type="image/png" />
+            <img src="motion-tilt-icon.jpg" alt="" width="18" height="18" decoding="async" />
+          </picture>
         </button>
       </div>
     </div>
@@ -1352,7 +1362,8 @@
           if (softGy > 0) softGy *= 1.12;
           else if (softGy < 0) softGy *= 0.88;
           grav.x = Math.max(-CAP, Math.min(CAP, softGx));
-          grav.y = Math.max(-CAP, Math.min(CAP, softGy));
+          /* Flip β→gravity Y (screen Z) so tilt matches on-device expectation. */
+          grav.y = Math.max(-CAP, Math.min(CAP, -softGy));
         } else {
           grav.x = Math.max(-1.2, Math.min(1.2, g / 25));
           grav.y = Math.max(-1.2, Math.min(1.2, (b - 50) / 25));
