@@ -254,7 +254,7 @@
     #gyro-prompt.is-visible {
       display: block;
     }
-    #gyro-prompt button {
+    #gyro-prompt #gyro-enable {
       margin-left: 8px;
       padding: 4px 10px;
       font-size: 11px;
@@ -276,12 +276,14 @@
       height: 26px;
       flex-shrink: 0;
       cursor: pointer;
-    }
-    .gyro-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      font: inherit;
+      color: inherit;
     }
     .gyro-switch__track {
       position: absolute;
@@ -329,20 +331,20 @@
       opacity: 0.92;
       filter: contrast(1.15);
     }
-    .gyro-switch input:checked + .gyro-switch__track {
+    .gyro-switch.is-on .gyro-switch__track {
       background: var(--btn-active-bg);
       border-color: var(--btn-active-border);
     }
-    .gyro-switch input:checked + .gyro-switch__track::after {
+    .gyro-switch.is-on .gyro-switch__track::after {
       transform: translate(18px, -50%);
     }
-    html[data-theme='dark'] .gyro-switch input:checked + .gyro-switch__track::after {
+    html[data-theme='dark'] .gyro-switch.is-on .gyro-switch__track::after {
       background: #f0f0f0;
     }
-    .gyro-switch input:checked + .gyro-switch__track .gyro-switch__thumb {
+    .gyro-switch.is-on .gyro-switch__track .gyro-switch__thumb {
       transform: translateX(18px);
     }
-    .gyro-switch input:focus-visible + .gyro-switch__track {
+    .gyro-switch:focus-visible .gyro-switch__track {
       outline: 2px solid var(--btn-hover-border);
       outline-offset: 2px;
     }
@@ -584,20 +586,26 @@
         >Tilt to steer in Physics mode <button type="button" id="gyro-enable">Enable motion</button></span
       >
       <div class="gyro-prompt__modern" role="presentation">
-        <label class="gyro-switch">
-          <input type="checkbox" id="gyro-toggle" role="switch" aria-label="Device motion" />
-          <span class="gyro-switch__track" aria-hidden="true"
-            ><span class="gyro-switch__thumb"
-              ><img
+        <button
+          type="button"
+          id="gyro-toggle"
+          class="gyro-switch"
+          aria-pressed="false"
+          aria-label="Device motion"
+        >
+          <span class="gyro-switch__track" aria-hidden="true">
+            <span class="gyro-switch__thumb">
+              <img
                 class="gyro-switch__thumb-icon"
                 src="motion-tilt-icon.jpg"
                 alt=""
                 width="14"
                 height="14"
                 decoding="async"
-            /></span
-          ></span>
-        </label>
+              />
+            </span>
+          </span>
+        </button>
       </div>
     </div>
   </nav>
@@ -612,6 +620,11 @@
   var gyroPrompt = document.getElementById('gyro-prompt');
   var gyroBtn = document.getElementById('gyro-enable');
   var gyroToggle = document.getElementById('gyro-toggle');
+  function syncGyroToggleUi() {
+    if (!gyroToggle) return;
+    gyroToggle.classList.toggle('is-on', gyroMotionOn);
+    gyroToggle.setAttribute('aria-pressed', gyroMotionOn ? 'true' : 'false');
+  }
   var resetBtn = document.getElementById('reset-fruits');
   var themeToggle = document.getElementById('theme-toggle');
   var THEME_STORAGE_KEY = 'fruit-stack-theme';
@@ -1256,7 +1269,7 @@
           mode === MODE.PHYSICS && typeof DeviceOrientationEvent !== 'undefined'
         );
         if (gyroToggle && mode === MODE.PHYSICS) {
-          gyroToggle.checked = gyroMotionOn;
+          syncGyroToggleUi();
         }
       } else {
         gyroPrompt.classList.toggle(
@@ -1377,8 +1390,8 @@
         if (g == null || b == null) return;
         if (isMobileFruitScale()) {
           var GAMMA_DIV = 36;
-          /* Bottom-heavy: resting bias + stronger response when the bottom of the phone leads the tilt. */
-          var BETA_NEUTRAL = 63;
+          /* Phone flat on a table, screen up: beta ≈ 90° (W3C device orientation). */
+          var BETA_NEUTRAL = 90;
           var BETA_DIV = 48;
           var CAP = 1.05;
           var rawGx = g / GAMMA_DIV;
@@ -1423,30 +1436,29 @@
   if (gyroToggle) {
     gyroToggle.addEventListener('click', function (e) {
       e.stopPropagation();
-    });
-    gyroToggle.addEventListener('change', function () {
-      var on = gyroToggle.checked;
-      if (on) {
-        gyroMotionOn = true;
-        if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-          DeviceOrientationEvent.requestPermission()
-            .then(function (s) {
-              if (s === 'granted') {
-                attachGyro();
-              } else {
-                gyroMotionOn = false;
-                gyroToggle.checked = false;
-              }
-            })
-            .catch(function () {
-              gyroMotionOn = false;
-              gyroToggle.checked = false;
-            });
-        } else {
-          attachGyro();
-        }
-      } else {
+      if (gyroMotionOn) {
         gyroMotionOn = false;
+        syncGyroToggleUi();
+        return;
+      }
+      gyroMotionOn = true;
+      syncGyroToggleUi();
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        DeviceOrientationEvent.requestPermission()
+          .then(function (s) {
+            if (s === 'granted') {
+              attachGyro();
+            } else {
+              gyroMotionOn = false;
+              syncGyroToggleUi();
+            }
+          })
+          .catch(function () {
+            gyroMotionOn = false;
+            syncGyroToggleUi();
+          });
+      } else {
+        attachGyro();
       }
     });
   }
